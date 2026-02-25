@@ -154,12 +154,24 @@ test_output*.txt
 # ===========================
 # Claude Code / AI Tools
 # ===========================
-# AI assistant working files (not project documentation)
+# AI assistant files (keep out of repo entirely)
+CLAUDE.md
 .claude/
+AGENTS.md
+**/AGENTS.md
 .cursor/
+.cursorrules
 .aider*
 .omc/
-**/AGENTS.md
+.copilot/
+.github/copilot/
+.codeium/
+.continue/
+.windsurf/
+.bolt/
+.clinerules
+.roomodes
+cline_docs/
 
 # ===========================
 # Project Development Files
