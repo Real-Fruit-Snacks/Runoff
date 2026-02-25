@@ -1,0 +1,268 @@
+# ===========================
+# Python
+# ===========================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+MANIFEST
+sdist/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===========================
+# Virtual Environments
+# ===========================
+venv/
+env/
+.venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===========================
+# IDE / Editors
+# ===========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.code-workspace
+
+# ===========================
+# Testing / Coverage
+# ===========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+pytest_cache/
+nosetests.xml
+
+# ===========================
+# Type Checking / Linting
+# ===========================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
+.pyre/
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ===========================
+# Environment / Secrets
+# ===========================
+.env
+.env.local
+.env.*.local
+*.local
+secrets.json
+secrets.yaml
+secrets.yml
+credentials.json
+credentials.yaml
+*.pem
+*.key
+.netrc
+
+# ===========================
+# Logs and Output
+# ===========================
+logs/
+*.log
+*.log.*
+Output.txt
+output.txt
+debug.txt
+error.txt
+Test_app.txt
+test_output*.txt
+*_output.txt
+*_results.txt
+
+# ===========================
+# Generated Reports and Analysis
+# ===========================
+# Be specific to avoid ignoring .github templates
+# Root-level reports
+/code_analysis_report.md
+/fix_changelog.md
+/fix_verification_report.md
+/github_release_prep_report.md
+/*_analysis.md
+/*_report.md
+/analysis_*.md
+/report_*.md
+
+# Common report patterns (any directory except .github)
+**/report_*.md
+**/analysis_*.md
+**/*_findings.md
+**/*_summary.md
+!.github/**/*.md
+
+# ===========================
+# Output Files (Query Results)
+# ===========================
+# Note: These are excluded because runoff generates
+# output in these formats during normal operation
+*.html
+*.json
+*.csv
+!.github/**/*.json
+!docs/**
+
+# ===========================
+# Claude Code / AI Tools
+# ===========================
+# AI assistant working files (not project documentation)
+.claude/
+.cursor/
+.aider*
+.omc/
+**/AGENTS.md
+
+# ===========================
+# Project Development Files
+# ===========================
+# Internal development scripts and notes
+sync.sh
+REFACTOR_PLAN.md
+CODE_REVIEW.md
+QUERY_GAP_ANALYSIS.md
+TODO.md
+NOTES.md
+SCRATCH.md
+debug_owned.cypher
+test_query.cypher
+*.cypher
+test_all_features.sh
+test_bugfixes.sh
+test_*.sh
+test_commands.txt
+comprehensive_test.txt
+scratch.py
+debug.py
+temp.py
+tmp.py
+
+# ===========================
+# Jupyter Notebooks
+# ===========================
+.ipynb_checkpoints/
+*.ipynb
+
+# ===========================
+# Documentation Build
+# ===========================
+docs/_build/
+site/
+
+# ===========================
+# Miscellaneous
+# ===========================
+*.bak
+*.tmp
+*.temp
+*.old
+*.orig
+.cache/
+*.cache
+
+# ===========================
+# BloodHound Data Files
+# ===========================
+# SharpHound/AzureHound collection files
+*.zip
+bloodhound*.json
+*_bloodhound.json
+sharphound*.json
+azurehound*.json
+computers.json
+users.json
+groups.json
+domains.json
+sessions.json
+containers.json
+gpos.json
+ous.json
+
+# ===========================
+# Additional Safety Patterns
+# ===========================
+# Catch-all for common unwanted patterns
+**/drafts/
+**/backup/
+**/backups/
+**/.backup/
+**/archive/
+**/old/
+**/deprecated/
+**/_old/
+**/_backup/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Compressed files (except in specific locations)
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Core dumps
+core
+core.*
+*.core
+
+# Editor backup files
+\#*\#
+.#*
+
+# macOS resource forks
+.AppleDouble
+.LSOverride
+
+# Windows shortcuts
+*.lnk

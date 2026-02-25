@@ -1,0 +1,49 @@
+"""Cross-Domain Sessions"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from runoff.display.colors import Severity
+from runoff.display.tables import print_header, print_subheader, print_table, print_warning
+from runoff.queries.base import register_query
+
+if TYPE_CHECKING:
+    from runoff.core.bloodhound import BloodHoundCE
+
+
+@register_query(
+    name="Cross-Domain Sessions", category="Attack Paths", default=True, severity=Severity.LOW
+)
+def get_cross_domain_sessions(
+    bh: BloodHoundCE, domain: str | None = None, severity: Severity = None
+) -> int:
+    """Find sessions crossing domain boundaries"""
+    query = """
+    MATCH (c:Computer)-[:HasSession]->(u:User)
+    WHERE toLower(c.domain) <> toLower(u.domain)
+    AND c.domain IS NOT NULL AND c.domain <> ''
+    AND u.domain IS NOT NULL AND u.domain <> ''
+    RETURN c.name AS computer, c.domain AS computer_domain, u.name AS user, u.domain AS user_domain
+    LIMIT 50
+    """
+    results = bh.run_query(query)
+    result_count = len(results)
+
+    if not print_header("Cross-Domain Sessions", severity, result_count):
+        return result_count
+    print_subheader(f"Found {result_count} cross-domain session(s)")
+
+    if results:
+        print_warning("Cross-domain sessions may allow lateral movement between domains!")
+        print_table(
+            ["Computer", "Computer Domain", "User", "User Domain"],
+            [[r["computer"], r["computer_domain"], r["user"], r["user_domain"]] for r in results],
+        )
+
+    return result_count
+
+
+# ============================================================================
+# NEW QUERIES - ADCS Enhancements & Miscellaneous
+# ============================================================================

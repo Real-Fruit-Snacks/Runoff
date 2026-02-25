@@ -1,0 +1,63 @@
+"""Owned -> Kerberoastable"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from runoff.core.config import config
+from runoff.display.colors import Severity
+from runoff.display.paths import print_paths_grouped
+from runoff.display.tables import print_header, print_subheader
+from runoff.queries.base import register_query
+
+if TYPE_CHECKING:
+    from runoff.core.bloodhound import BloodHoundCE
+
+
+@register_query(
+    name="Owned -> Kerberoastable", category="Owned", default=True, severity=Severity.HIGH
+)
+def get_owned_to_kerberoastable(
+    bh: BloodHoundCE, domain: str | None = None, severity: Severity = None
+) -> int:
+    """Find paths from owned principals to kerberoastable users"""
+    # Build optional from_owned filter
+    from_owned_filter = ""
+    if config.from_owned:
+        from_owned_filter = "AND toUpper(owned.name) = toUpper($from_owned)"
+
+    query = f"""
+    MATCH (owned)
+    WHERE (owned:Tag_Owned OR 'owned' IN COALESCE(owned.system_tags, []) OR owned.owned = true)
+    {from_owned_filter}
+    WITH owned
+    MATCH (target:User {{hasspn: true, enabled: true}})
+    WHERE NOT target.name STARTS WITH 'KRBTGT'
+    AND owned <> target
+    WITH owned, target
+    MATCH p=shortestPath((owned)-[*1..{config.max_path_depth}]->(target))
+    RETURN
+        [node IN nodes(p) | node.name] AS nodes,
+        [node IN nodes(p) | CASE
+            WHEN node:User THEN 'User'
+            WHEN node:Group THEN 'Group'
+            WHEN node:Computer THEN 'Computer'
+            WHEN node:Domain THEN 'Domain'
+            ELSE 'Other' END] AS node_types,
+        [r IN relationships(p) | type(r)] AS relationships,
+        length(p) AS path_length
+    ORDER BY length(p)
+    LIMIT {config.max_paths}
+    """
+    params = {"from_owned": config.from_owned} if config.from_owned else {}
+    results = bh.run_query(query, params)
+    result_count = len(results)
+
+    if not print_header("Owned -> Kerberoastable Users", severity, result_count):
+        return result_count
+    print_subheader(f"Found {result_count} path(s) to kerberoastable users")
+
+    if results:
+        print_paths_grouped(results)
+
+    return result_count
