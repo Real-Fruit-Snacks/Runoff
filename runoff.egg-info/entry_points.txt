@@ -1,2 +1,0 @@
-[console_scripts]
-runoff = runoff.cli:cli
