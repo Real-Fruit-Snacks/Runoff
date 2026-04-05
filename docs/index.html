@@ -1,1479 +1,562 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Runoff — AD Security Audit Tool</title>
-  <meta name="description" content="Active Directory security audit tool — extract quick wins, attack paths, and misconfigurations from BloodHound CE. 177 security queries across 15 categories with exploitation guidance.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <style>
-    /* =========================================================
-       RUNOFF LANDING PAGE
-       Catppuccin Mocha palette — teal/green accent
-       ========================================================= */
-
-    *, *::before, *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --ctp-rosewater: #f5e0dc;
-      --ctp-flamingo: #f2cdcd;
-      --ctp-pink: #f5c2e7;
-      --ctp-mauve: #cba6f7;
-      --ctp-red: #f38ba8;
-      --ctp-maroon: #eba0ac;
-      --ctp-peach: #fab387;
-      --ctp-yellow: #f9e2af;
-      --ctp-green: #a6e3a1;
-      --ctp-teal: #94e2d5;
-      --ctp-sky: #89dceb;
-      --ctp-sapphire: #74c7ec;
-      --ctp-blue: #89b4fa;
-      --ctp-lavender: #b4befe;
-      --ctp-text: #cdd6f4;
-      --ctp-subtext1: #bac2de;
-      --ctp-subtext0: #a6adc8;
-      --ctp-overlay2: #9399b2;
-      --ctp-overlay1: #7f849c;
-      --ctp-overlay0: #6c7086;
-      --ctp-surface2: #585b70;
-      --ctp-surface1: #45475a;
-      --ctp-surface0: #313244;
-      --ctp-base: #1e1e2e;
-      --ctp-mantle: #181825;
-      --ctp-crust: #11111b;
-
-      --accent: var(--ctp-teal);
-      --accent2: var(--ctp-green);
-    }
-
-    html {
-      scroll-behavior: smooth;
-      scrollbar-width: thin;
-      scrollbar-color: var(--ctp-surface1) var(--ctp-crust);
-    }
-
-    body {
-      font-family: 'JetBrains Mono', monospace;
-      background-color: var(--ctp-crust);
-      color: var(--ctp-text);
-      line-height: 1.7;
-      font-size: 15px;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    /* ---- Dot-grid background pattern ---- */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: radial-gradient(var(--ctp-surface0) 1px, transparent 1px);
-      background-size: 24px 24px;
-      opacity: 0.3;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ---- CRT scanline overlay ---- */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.03) 2px,
-        rgba(0, 0, 0, 0.03) 4px
-      );
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    /* ---- Layout ---- */
-    .page-wrap {
-      position: relative;
-      z-index: 1;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    section {
-      margin-bottom: 96px;
-    }
-
-    a {
-      color: var(--ctp-teal);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    a:hover {
-      color: var(--ctp-green);
-    }
-
-    /* ---- Section titles ---- */
-    .section-label {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--ctp-overlay0);
-      border: 1px solid var(--ctp-surface1);
-      padding: 4px 12px;
-      border-radius: 2px;
-      margin-bottom: 20px;
-    }
-
-    .section-title {
-      font-size: clamp(22px, 3vw, 30px);
-      font-weight: 700;
-      color: var(--ctp-text);
-      margin-bottom: 12px;
-      line-height: 1.3;
-    }
-
-    .section-desc {
-      color: var(--ctp-subtext0);
-      font-size: 14px;
-      max-width: 820px;
-      margin-bottom: 40px;
-    }
-
-    /* =========================================================
-       HERO
-       ========================================================= */
-    .hero {
-      padding: 80px 0 48px;
-      text-align: center;
-      margin-bottom: 64px;
-    }
-
-    .hero-terminal {
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 8px;
-      background: var(--ctp-mantle);
-      max-width: 780px;
-      margin: 0 auto;
-      overflow: hidden;
-      box-shadow:
-        0 0 0 1px var(--ctp-surface0),
-        0 24px 80px -12px rgba(0, 0, 0, 0.6),
-        0 0 120px -40px rgba(148, 226, 213, 0.08);
-    }
-
-    .hero-titlebar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: var(--ctp-crust);
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .hero-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-
-    .hero-dot--red { background: var(--ctp-red); }
-    .hero-dot--yellow { background: var(--ctp-yellow); }
-    .hero-dot--green { background: var(--ctp-green); }
-
-    .hero-titlebar-text {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--ctp-overlay0);
-      letter-spacing: 0.05em;
-    }
-
-    .hero-body {
-      padding: 48px 40px 56px;
-    }
-
-    .hero-prompt {
-      font-size: 13px;
-      color: var(--ctp-overlay0);
-      margin-bottom: 24px;
-      letter-spacing: 0.02em;
-    }
-
-    .hero-prompt .prompt-symbol {
-      color: var(--ctp-green);
-    }
-
-    .hero-prompt .prompt-path {
-      color: var(--ctp-teal);
-    }
-
-    .hero-title {
-      font-size: clamp(42px, 7vw, 72px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      margin-bottom: 8px;
-      background: linear-gradient(
-        135deg,
-        var(--ctp-teal) 0%,
-        var(--ctp-green) 50%,
-        var(--ctp-teal) 100%
-      );
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 0 40px rgba(148, 226, 213, 0.2));
-    }
-
-    .hero-cursor {
-      display: inline-block;
-      width: 3px;
-      height: 0.8em;
-      background: var(--ctp-green);
-      margin-left: 4px;
-      vertical-align: baseline;
-      animation: blink 1s step-end infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    .hero-tagline {
-      font-size: clamp(14px, 2vw, 17px);
-      color: var(--ctp-subtext0);
-      margin-bottom: 36px;
-      font-weight: 400;
-      line-height: 1.6;
-    }
-
-    .hero-tagline em {
-      color: var(--ctp-subtext1);
-      font-style: normal;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      border-radius: 4px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-
-    .btn-primary {
-      background: var(--ctp-teal);
-      color: var(--ctp-crust);
-      border-color: var(--ctp-teal);
-    }
-
-    .btn-primary:hover {
-      background: var(--ctp-green);
-      border-color: var(--ctp-green);
-      color: var(--ctp-crust);
-      box-shadow: 0 0 24px rgba(148, 226, 213, 0.25);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--ctp-subtext1);
-      border-color: var(--ctp-surface1);
-    }
-
-    .btn-ghost:hover {
-      color: var(--ctp-text);
-      border-color: var(--ctp-overlay0);
-      background: var(--ctp-surface0);
-    }
-
-    /* =========================================================
-       FEATURES GRID
-       ========================================================= */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .feature-card {
-      background: var(--ctp-mantle);
-      border: 1px solid var(--ctp-surface0);
-      border-radius: 6px;
-      padding: 28px 24px;
-      transition: all 0.25s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--ctp-teal), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .feature-card:hover {
-      border-color: var(--ctp-surface1);
-      background: var(--ctp-base);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
-    }
-
-    .feature-card:hover::before {
-      opacity: 1;
-    }
-
-    .feature-icon {
-      font-size: 24px;
-      margin-bottom: 16px;
-      display: block;
-      width: 44px;
-      height: 44px;
-      line-height: 44px;
-      text-align: center;
-      background: var(--ctp-surface0);
-      border-radius: 8px;
-      border: 1px solid var(--ctp-surface1);
-    }
-
-    .feature-card h3 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ctp-text);
-      margin-bottom: 8px;
-    }
-
-    .feature-card p {
-      font-size: 13px;
-      color: var(--ctp-subtext0);
-      line-height: 1.6;
-    }
-
-    /* ---- Unique accent colors per card ---- */
-    .feature-card:nth-child(1):hover { border-color: var(--ctp-teal); }
-    .feature-card:nth-child(1):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-teal), transparent); }
-
-    .feature-card:nth-child(2):hover { border-color: var(--ctp-green); }
-    .feature-card:nth-child(2):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-green), transparent); }
-
-    .feature-card:nth-child(3):hover { border-color: var(--ctp-peach); }
-    .feature-card:nth-child(3):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-peach), transparent); }
-
-    .feature-card:nth-child(4):hover { border-color: var(--ctp-red); }
-    .feature-card:nth-child(4):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-red), transparent); }
-
-    .feature-card:nth-child(5):hover { border-color: var(--ctp-mauve); }
-    .feature-card:nth-child(5):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-mauve), transparent); }
-
-    .feature-card:nth-child(6):hover { border-color: var(--ctp-yellow); }
-    .feature-card:nth-child(6):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-yellow), transparent); }
-
-    .feature-card:nth-child(7):hover { border-color: var(--ctp-blue); }
-    .feature-card:nth-child(7):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-blue), transparent); }
-
-    .feature-card:nth-child(8):hover { border-color: var(--ctp-flamingo); }
-    .feature-card:nth-child(8):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-flamingo), transparent); }
-
-    /* =========================================================
-       TERMINAL MOCKUP
-       ========================================================= */
-    .mockup-section {
-      text-align: center;
-    }
-
-    .mockup-frame {
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--ctp-mantle);
-      box-shadow:
-        0 0 0 1px var(--ctp-surface0),
-        0 32px 80px -16px rgba(0, 0, 0, 0.5),
-        0 0 160px -60px rgba(148, 226, 213, 0.06);
-      max-width: 900px;
-      margin: 0 auto;
-      text-align: left;
-    }
-
-    .mockup-titlebar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: var(--ctp-crust);
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .mockup-titlebar-text {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--ctp-overlay0);
-    }
-
-    .mockup-body {
-      padding: 28px;
-    }
-
-    .mockup-banner {
-      border: 2px solid var(--ctp-teal);
-      border-radius: 4px;
-      padding: 16px 24px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .mockup-banner h2 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--ctp-teal);
-      letter-spacing: 0.04em;
-    }
-
-    .mockup-target {
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 4px;
-      padding: 14px 20px;
-      margin-bottom: 20px;
-      background: var(--ctp-base);
-    }
-
-    .mockup-target-title {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--ctp-overlay0);
-      margin-bottom: 10px;
-    }
-
-    .mockup-target-row {
-      display: flex;
-      gap: 8px;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    .mockup-target-row .label {
-      color: var(--ctp-subtext0);
-      min-width: 80px;
-    }
-
-    .mockup-target-row .value {
-      color: var(--ctp-text);
-    }
-
-    .mockup-wins {
-      border: 1px solid var(--ctp-yellow);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .mockup-wins-header {
-      background: rgba(249, 226, 175, 0.08);
-      border-bottom: 1px solid var(--ctp-yellow);
-      padding: 10px 20px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--ctp-yellow);
-    }
-
-    .mockup-win {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .mockup-win:last-child {
-      border-bottom: none;
-    }
-
-    .mockup-win-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
-    }
-
-    .mockup-win-rank {
-      font-size: 13px;
-      color: var(--ctp-text);
-      font-weight: 600;
-    }
-
-    .mockup-win-score {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ctp-crust);
-      padding: 1px 8px;
-      border-radius: 3px;
-    }
-
-    .mockup-win-score--critical {
-      background: var(--ctp-red);
-    }
-
-    .mockup-win-score--high {
-      background: var(--ctp-peach);
-    }
-
-    .mockup-win-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ctp-text);
-    }
-
-    .mockup-win-badge {
-      font-size: 11px;
-      padding: 1px 8px;
-      border-radius: 3px;
-      font-weight: 500;
-    }
-
-    .mockup-win-badge--conf {
-      color: var(--ctp-green);
-      border: 1px solid var(--ctp-green);
-    }
-
-    .mockup-win-badge--risk {
-      color: var(--ctp-teal);
-      border: 1px solid var(--ctp-teal);
-    }
-
-    .mockup-win-desc {
-      font-size: 12px;
-      color: var(--ctp-subtext0);
-      margin-bottom: 10px;
-    }
-
-    .mockup-win-cmd {
-      background: var(--ctp-crust);
-      border: 1px solid var(--ctp-surface0);
-      border-radius: 4px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--ctp-green);
-      line-height: 1.7;
-    }
-
-    .mockup-win-cmd .cmd-label {
-      color: var(--ctp-overlay0);
-      font-size: 11px;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .mockup-caption {
-      margin-top: 20px;
-      font-size: 13px;
-      color: var(--ctp-overlay1);
-      font-style: italic;
-      text-align: center;
-    }
-
-    /* =========================================================
-       ARCHITECTURE
-       ========================================================= */
-    .arch-terminal {
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--ctp-mantle);
-      box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.4);
-    }
-
-    .arch-titlebar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: var(--ctp-crust);
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .arch-titlebar-text {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--ctp-overlay0);
-    }
-
-    .arch-body {
-      padding: 32px;
-    }
-
-    .arch-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-    }
-
-    .arch-item {
-      padding: 20px;
-      border: 1px solid var(--ctp-surface0);
-      border-radius: 4px;
-      background: var(--ctp-base);
-    }
-
-    .arch-item-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .arch-item-marker {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ctp-crust);
-      background: var(--ctp-teal);
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-
-    .arch-item:nth-child(2) .arch-item-marker { background: var(--ctp-green); }
-    .arch-item:nth-child(3) .arch-item-marker { background: var(--ctp-peach); }
-    .arch-item:nth-child(4) .arch-item-marker { background: var(--ctp-yellow); }
-
-    .arch-item h3 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ctp-text);
-    }
-
-    .arch-item p {
-      font-size: 13px;
-      color: var(--ctp-subtext0);
-      line-height: 1.6;
-    }
-
-    .arch-item code {
-      font-size: 12px;
-      color: var(--ctp-peach);
-      background: var(--ctp-surface0);
-      padding: 1px 6px;
-      border-radius: 3px;
-    }
-
-    .arch-divider {
-      border: none;
-      border-top: 1px dashed var(--ctp-surface1);
-      margin: 28px 0;
-    }
-
-    .arch-stack {
-      font-size: 13px;
-      color: var(--ctp-subtext0);
-      text-align: center;
-    }
-
-    .arch-stack span {
-      display: inline-block;
-      padding: 4px 14px;
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 3px;
-      margin: 4px;
-      background: var(--ctp-base);
-      color: var(--ctp-subtext1);
-      font-size: 12px;
-    }
-
-    /* =========================================================
-       STATS
-       ========================================================= */
-    .kb-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .kb-card {
-      background: var(--ctp-mantle);
-      border: 1px solid var(--ctp-surface0);
-      border-radius: 6px;
-      padding: 24px 20px;
-      text-align: center;
-      transition: all 0.25s;
-    }
-
-    .kb-card:hover {
-      border-color: var(--ctp-surface1);
-      background: var(--ctp-base);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
-    }
-
-    .kb-number {
-      font-size: 32px;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .kb-card:nth-child(1) .kb-number { color: var(--ctp-teal); }
-    .kb-card:nth-child(2) .kb-number { color: var(--ctp-green); }
-    .kb-card:nth-child(3) .kb-number { color: var(--ctp-red); }
-    .kb-card:nth-child(4) .kb-number { color: var(--ctp-peach); }
-
-    .kb-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ctp-text);
-      margin-bottom: 6px;
-    }
-
-    .kb-desc {
-      font-size: 12px;
-      color: var(--ctp-subtext0);
-      line-height: 1.5;
-    }
-
-    /* =========================================================
-       CATEGORY TABLE
-       ========================================================= */
-    .ranking-table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 8px;
-      background: var(--ctp-mantle);
-    }
-
-    .ranking-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .ranking-table th {
-      background: var(--ctp-crust);
-      color: var(--ctp-subtext1);
-      font-weight: 600;
-      font-size: 12px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 14px 20px;
-      text-align: left;
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .ranking-table td {
-      padding: 12px 20px;
-      color: var(--ctp-subtext0);
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .ranking-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .ranking-table tr:hover td {
-      background: var(--ctp-base);
-    }
-
-    .ranking-table td:first-child {
-      color: var(--ctp-text);
-      font-weight: 500;
-    }
-
-    .ranking-table .highlight {
-      color: var(--ctp-teal);
-      font-weight: 600;
-    }
-
-    /* =========================================================
-       GETTING STARTED
-       ========================================================= */
-    .start-row {
-      display: flex;
-      gap: 40px;
-      align-items: flex-start;
-    }
-
-    .start-terminal {
-      border: 1px solid var(--ctp-surface1);
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--ctp-mantle);
-      box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.4);
-      flex: 1;
-      min-width: 0;
-    }
-
-    .start-titlebar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: var(--ctp-crust);
-      border-bottom: 1px solid var(--ctp-surface0);
-    }
-
-    .start-titlebar-text {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--ctp-overlay0);
-    }
-
-    .start-body {
-      padding: 28px 32px;
-    }
-
-    .start-line {
-      margin-bottom: 4px;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    .start-line .prompt {
-      color: var(--ctp-green);
-      user-select: none;
-    }
-
-    .start-line .cmd {
-      color: var(--ctp-text);
-    }
-
-    .start-line .comment {
-      color: var(--ctp-overlay0);
-    }
-
-    .start-line .flag {
-      color: var(--ctp-peach);
-    }
-
-    .start-line .arg {
-      color: var(--ctp-yellow);
-    }
-
-    .start-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .start-info p {
-      font-size: 14px;
-      color: var(--ctp-subtext0);
-      margin-bottom: 12px;
-      line-height: 1.7;
-    }
-
-    .start-info code {
-      font-size: 13px;
-      color: var(--ctp-peach);
-      background: var(--ctp-surface0);
-      padding: 2px 8px;
-      border-radius: 3px;
-      border: 1px solid var(--ctp-surface1);
-    }
-
-    /* =========================================================
-       FOOTER
-       ========================================================= */
-    .site-footer {
-      border-top: 1px solid var(--ctp-surface0);
-      padding: 48px 0;
-      text-align: center;
-      margin-top: 32px;
-    }
-
-    .footer-tagline {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--ctp-subtext1);
-      margin-bottom: 24px;
-      letter-spacing: 0.02em;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-
-    .footer-links a {
-      font-size: 13px;
-      color: var(--ctp-overlay1);
-      transition: color 0.2s;
-    }
-
-    .footer-links a:hover {
-      color: var(--ctp-teal);
-    }
-
-    .footer-copy {
-      font-size: 12px;
-      color: var(--ctp-overlay0);
-    }
-
-    .footer-disclaimer {
-      font-size: 11px;
-      color: var(--ctp-overlay0);
-      margin-top: 16px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      line-height: 1.6;
-    }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
-    @media (max-width: 900px) {
-      .features-grid,
-      .kb-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .arch-grid {
-        grid-template-columns: 1fr;
-      }
-      .hero-body {
-        padding: 36px 24px 44px;
-      }
-      .start-row {
-        flex-direction: column;
-        gap: 24px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      body {
-        font-size: 14px;
-      }
-      .page-wrap {
-        padding: 0 16px;
-      }
-      .features-grid,
-      .kb-grid {
-        grid-template-columns: 1fr;
-      }
-      section {
-        margin-bottom: 64px;
-      }
-      .hero {
-        padding: 48px 0 32px;
-      }
-      .hero-body {
-        padding: 28px 20px 36px;
-      }
-      .hero-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-      .btn {
-        width: 100%;
-        max-width: 260px;
-        justify-content: center;
-      }
-      .arch-body {
-        padding: 20px;
-      }
-      .start-body {
-        padding: 20px;
-      }
-      .start-line {
-        font-size: 12px;
-      }
-      .feature-card {
-        padding: 22px 20px;
-      }
-      .mockup-body {
-        padding: 16px;
-      }
-    }
-
-    /* ---- Selection highlight ---- */
-    ::selection {
-      background: rgba(148, 226, 213, 0.25);
-      color: var(--ctp-text);
-    }
-
-    /* ---- Focus styles for accessibility ---- */
-    a:focus-visible,
-    .btn:focus-visible {
-      outline: 2px solid var(--ctp-teal);
-      outline-offset: 2px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runoff — Active Directory Security Audit Tool</title>
+    <meta name="description" content="Active Directory security audit tool. Extract quick wins, attack paths, and misconfigurations from BloodHound CE with 177 security queries in 15 categories.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #f38ba8;
+            --maroon: #eba0ac;
+            --pink: #f5c2e7;
+            --mauve: #cba6f7;
+            --lavender: #b4befe;
+            --blue: #89b4fa;
+            --sapphire: #74c7ec;
+            --sky: #89dceb;
+            --teal: #94e2d5;
+            --green: #a6e3a1;
+            --yellow: #f9e2af;
+            --peach: #fab387;
+            --text: #cdd6f4;
+            --subtext1: #bac2de;
+            --subtext0: #a6adc8;
+            --overlay2: #9399b2;
+            --overlay1: #7f849c;
+            --overlay0: #6c7086;
+            --surface2: #585b70;
+            --surface1: #45475a;
+            --surface0: #313244;
+            --base: #1e1e2e;
+            --mantle: #181825;
+            --crust: #11111b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--base);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(circle, var(--overlay0) 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.4;
+        }
+
+        ::selection { background: rgba(166, 227, 161, 0.3); color: var(--text); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--mantle);
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 0.88em;
+            color: var(--green);
+        }
+
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+
+        .hero {
+            padding: 100px 0 70px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--surface1), transparent);
+        }
+
+        .hero-logo {
+            width: 420px;
+            max-width: 85%;
+            margin: 0 auto 32px;
+            display: block;
+        }
+
+        .hero-tagline {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .hero-desc {
+            font-size: 1.02rem;
+            color: var(--subtext0);
+            max-width: 640px;
+            margin: 0 auto 28px;
+            line-height: 1.8;
+        }
+
+        .hero-warning {
+            display: inline-block;
+            background: rgba(243, 139, 168, 0.08);
+            border: 1px solid rgba(243, 139, 168, 0.2);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.82rem;
+            color: var(--subtext0);
+            margin-bottom: 32px;
+        }
+
+        .hero-warning strong { color: var(--red); }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface0);
+            border: 1px solid var(--surface1);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--subtext1);
+        }
+
+        .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .cta-primary {
+            background: linear-gradient(135deg, var(--teal), var(--green));
+            color: var(--crust);
+        }
+
+        .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(166, 227, 161, 0.2); }
+
+        .cta-secondary {
+            background: var(--surface0);
+            color: var(--text);
+            border: 1px solid var(--surface1);
+        }
+
+        .cta-secondary:hover { border-color: var(--green); color: var(--green); }
+
+        .section { padding: 80px 0; position: relative; }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--surface1), transparent);
+        }
+
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--green);
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text), var(--subtext0));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-desc {
+            font-size: 1rem;
+            color: var(--overlay2);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .feature-card {
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.25s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--surface1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        .feature-card p { font-size: 0.88rem; color: var(--overlay2); line-height: 1.7; }
+
+        .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .pill {
+            background: var(--surface0);
+            border: 1px solid var(--surface1);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--subtext0);
+            transition: all 0.2s;
+        }
+
+        .pill:hover { border-color: var(--green); color: var(--green); }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .arch-card {
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .arch-card h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+        .arch-card p { font-size: 0.82rem; color: var(--overlay2); line-height: 1.6; }
+
+        .terminal {
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .terminal-header {
+            background: var(--surface0);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .terminal-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--overlay2);
+            margin-left: 8px;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.9;
+            color: var(--subtext1);
+            overflow-x: auto;
+        }
+
+        .terminal-body .comment { color: var(--overlay0); }
+        .terminal-body .cmd { color: var(--green); }
+        .terminal-body .flag { color: var(--teal); }
+        .terminal-body .string { color: var(--peach); }
+        .terminal-body .prompt { color: var(--overlay0); }
+
+        .footer {
+            border-top: 1px solid var(--surface0);
+            padding: 48px 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--overlay2);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--green); }
+
+        .footer-toolkit { font-size: 0.78rem; color: var(--overlay0); margin-bottom: 8px; }
+        .footer-toolkit a { color: var(--overlay1); text-decoration: none; }
+        .footer-toolkit a:hover { color: var(--green); }
+
+        .footer-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--surface2);
+        }
+
+        .footer-brand a { color: var(--green); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .hero { padding: 60px 0 50px; }
+            .hero-logo { width: 280px; }
+            .section-title { font-size: 1.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .arch-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .arch-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="page-wrap">
+    <section class="hero">
+        <div class="container">
+            <img src="assets/logo-dark.svg" alt="Runoff" class="hero-logo">
 
-  <!-- ============ HERO ============ -->
-  <section class="hero" id="top">
-    <div class="hero-terminal">
-      <div class="hero-titlebar">
-        <span class="hero-dot hero-dot--red"></span>
-        <span class="hero-dot hero-dot--yellow"></span>
-        <span class="hero-dot hero-dot--green"></span>
-        <span class="hero-titlebar-text">runoff -- ad security audit</span>
-      </div>
-      <div class="hero-body">
-        <h1 class="hero-title">Runoff<span class="hero-cursor" aria-hidden="true"></span></h1>
-        <p class="hero-tagline">
-          <em>Active Directory security audit tool</em><br>
-          Extract quick wins, attack paths, and misconfigurations from BloodHound CE.
-        </p>
-        <div class="hero-buttons">
-          <a href="#getting-started" class="btn btn-primary">Get Started</a>
-          <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="btn btn-ghost">View on GitHub</a>
-        </div>
-      </div>
-    </div>
-  </section>
+            <p class="hero-tagline">Active Directory Security Audit Tool</p>
 
-  <!-- ============ FEATURES ============ -->
-  <section id="features">
-    <span class="section-label">// capabilities</span>
-    <h2 class="section-title">From BloodHound data to attack plan</h2>
-    <p class="section-desc">
-      Connect to BloodHound CE's Neo4j database and instantly surface misconfigurations, dangerous permissions, attack paths, and privilege escalation opportunities across 15 security categories.
-    </p>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#9878;</span>
-        <h3>177 Security Queries</h3>
-        <p>15 categories covering ACL abuse, ADCS, delegation, credentials, lateral movement, hygiene, and more. Each query returns actionable findings.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#8644;</span>
-        <h3>Attack Path Discovery</h3>
-        <p>Find shortest paths to Domain Admins, Domain Controllers, and between any two principals. Discover what owned nodes can reach.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#9760;</span>
-        <h3>Abuse Commands</h3>
-        <p>Toggle <code style="font-size:12px;color:var(--ctp-peach);background:var(--ctp-surface0);padding:1px 5px;border-radius:3px;">--abuse</code> to see exact exploitation commands (Impacket, Certipy, PowerView, Rubeus) for every finding. Copy-paste ready.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#128274;</span>
-        <h3>ADCS ESC1-ESC15</h3>
-        <p>Complete AD Certificate Services coverage: vulnerable templates, enrollment abuse, CA misconfiguration, and golden certificate paths.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#9673;</span>
-        <h3>Owned Principal Analysis</h3>
-        <p>Mark compromised accounts, then discover what they can reach: paths to DA, Kerberoastable targets, ADCS abuse, unconstrained delegation.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#9998;</span>
-        <h3>Multiple Output Formats</h3>
-        <p>Rich terminal tables with Catppuccin Mocha theme, JSON for automation, CSV for spreadsheets, HTML reports for management.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#9733;</span>
-        <h3>Domain Statistics</h3>
-        <p>Get instant overview: user/computer/group counts, trust relationships, tier-zero exposure, stale accounts, missing LAPS coverage.</p>
-      </div>
-
-      <div class="feature-card">
-        <span class="feature-icon" aria-hidden="true">&#128736;</span>
-        <h3>BloodHound CE API</h3>
-        <p>Authenticate, upload collector data, manage ingestion history. Full API integration alongside Neo4j queries.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ TERMINAL MOCKUP ============ -->
-  <section class="mockup-section" id="demo">
-    <span class="section-label">// in action</span>
-    <h2 class="section-title">Connect. Query. Exploit.</h2>
-    <p class="section-desc" style="margin-left:auto;margin-right:auto;">
-      Runoff connects to BloodHound CE's Neo4j database, runs categorized Cypher queries, and surfaces findings with severity ratings and exploitation commands.
-    </p>
-
-    <div class="mockup-frame">
-      <div class="mockup-titlebar">
-        <span class="hero-dot hero-dot--red"></span>
-        <span class="hero-dot hero-dot--yellow"></span>
-        <span class="hero-dot hero-dot--green"></span>
-        <span class="mockup-titlebar-text">runoff -p pass run acl -s HIGH --abuse</span>
-      </div>
-      <div class="mockup-body">
-        <div class="mockup-banner">
-          <h2>RUNOFF - AD Security Audit v3.1.0</h2>
-        </div>
-
-        <div class="mockup-target">
-          <div class="mockup-target-title">Connection Info</div>
-          <div class="mockup-target-row"><span class="label">Bolt URI:</span> <span class="value">bolt://127.0.0.1:7687</span></div>
-          <div class="mockup-target-row"><span class="label">Domain:</span> <span class="value">CORP.LOCAL</span></div>
-          <div class="mockup-target-row"><span class="label">Queries:</span> <span class="value">25 ACL queries</span></div>
-        </div>
-
-        <div class="mockup-wins">
-          <div class="mockup-wins-header">Findings - ACL Abuse</div>
-
-          <div class="mockup-win">
-            <div class="mockup-win-header">
-              <span class="mockup-win-score mockup-win-score--critical">CRITICAL</span>
-              <span class="mockup-win-name">GenericAll on Domain Admins</span>
-            </div>
-            <div class="mockup-win-desc">SVCBACKUP@CORP.LOCAL has GenericAll over DOMAIN ADMINS@CORP.LOCAL</div>
-            <div class="mockup-win-cmd">
-              <span class="cmd-label"># Abuse command:</span>
-              net rpc group addmem "DOMAIN ADMINS" SVCBACKUP -U SVCBACKUP -S dc01.corp.local
-            </div>
-          </div>
-
-          <div class="mockup-win">
-            <div class="mockup-win-header">
-              <span class="mockup-win-score mockup-win-score--high">HIGH</span>
-              <span class="mockup-win-name">Shadow Admins</span>
-            </div>
-            <div class="mockup-win-desc">HELPDESK@CORP.LOCAL owns EXCHANGE ADMINS@CORP.LOCAL</div>
-            <div class="mockup-win-cmd">
-              <span class="cmd-label"># Abuse command:</span>
-              Set-DomainObjectOwner -Identity 'EXCHANGE ADMINS' -OwnerIdentity HELPDESK
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <p class="mockup-caption">Runoff running ACL abuse queries with exploitation commands enabled.</p>
-  </section>
-
-  <!-- ============ ARCHITECTURE ============ -->
-  <section id="architecture">
-    <span class="section-label">// architecture</span>
-    <h2 class="section-title">One command. 177 queries. Zero guesswork.</h2>
-    <p class="section-desc">
-      Connect to BloodHound CE's Neo4j database, run categorized Cypher queries, and get formatted findings with severity ratings and exploitation commands.
-    </p>
-
-    <div class="arch-terminal">
-      <div class="arch-titlebar">
-        <span class="hero-dot hero-dot--red"></span>
-        <span class="hero-dot hero-dot--yellow"></span>
-        <span class="hero-dot hero-dot--green"></span>
-        <span class="arch-titlebar-text">system architecture</span>
-      </div>
-      <div class="arch-body">
-        <div class="arch-grid">
-          <div class="arch-item">
-            <div class="arch-item-header">
-              <span class="arch-item-marker">01</span>
-              <h3>Neo4j Queries</h3>
-            </div>
-            <p>
-              177 Cypher queries across 15 categories: ACL Abuse (25), ADCS (18), Privilege Escalation (18), Lateral Movement (18), Security Hygiene (23), and more. Flexible domain filtering handles data inconsistencies.
+            <p class="hero-desc">
+                Extract quick wins, attack paths, and misconfigurations from BloodHound Community Edition. 177 security queries across 15 categories with exploitation guidance, severity ratings, and multi-format reporting.
             </p>
-          </div>
 
-          <div class="arch-item">
-            <div class="arch-item-header">
-              <span class="arch-item-marker">02</span>
-              <h3>Severity Scoring</h3>
+            <div class="hero-warning">
+                <strong>Authorization Required:</strong> This tool is designed exclusively for authorized security testing with explicit written permission.
             </div>
-            <p>
-              Four-level severity system: <code>CRITICAL</code> (immediate exploitation), <code>HIGH</code> (serious risk), <code>MEDIUM</code> (misconfiguration), <code>LOW</code> (hardening). Filter with <code>--severity</code>.
-            </p>
-          </div>
 
-          <div class="arch-item">
-            <div class="arch-item-header">
-              <span class="arch-item-marker">03</span>
-              <h3>Abuse Templates</h3>
+            <div class="stats">
+                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> 177 Queries</div>
+                <div class="stat"><span class="stat-dot" style="background: var(--teal)"></span> 15 Categories</div>
+                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> ADCS ESC1-ESC15</div>
+                <div class="stat"><span class="stat-dot" style="background: var(--teal)"></span> Abuse Commands</div>
+                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> BloodHound CE API</div>
             </div>
-            <p>
-              YAML-based exploitation commands for each finding type. Covers Impacket, Certipy, PowerView, Rubeus, BloodHound CE API, and native tools.
-            </p>
-          </div>
 
-          <div class="arch-item">
-            <div class="arch-item-header">
-              <span class="arch-item-marker">04</span>
-              <h3>Rich Display</h3>
+            <div class="ctas">
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="cta cta-primary">View on GitHub</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff#quick-start" class="cta cta-secondary">Quick Start</a>
             </div>
-            <p>
-              Catppuccin Mocha themed tables, attack path trees, progress bars, executive summaries, and HTML report generation. Multiple output formats.
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">Comprehensive AD Audit</h2>
+            <p class="section-desc">Query BloodHound CE data for attack paths, misconfigurations, and privilege escalation opportunities with exploitation guidance.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>177 Security Queries</h3>
+                    <p>ACL abuse, ADCS ESC1-ESC15, delegation, coercion relay, lateral movement, Azure/hybrid, and credential attacks -- all registered via decorator and runnable by category.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Node Investigation</h3>
+                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins in a single command. Wildcard patterns trigger triage mode.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Abuse Commands</h3>
+                    <p>Exploitation commands alongside every finding -- Impacket, Certipy, bloodyAD, Rubeus -- with auto-substituted targets, domains, and OPSEC warnings.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Multi-Format Output</h3>
+                    <p>Table, JSON, CSV, HTML, and Markdown reports from a single run. Structured output to stdout, status to stderr. Pipe-friendly for jq and csvtool.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Path Finding</h3>
+                    <p>Shortest paths to Domain Admins, Domain Controllers, or between arbitrary nodes. Tree-view rendering with relationship labels and hop counts.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Owned Tracking</h3>
+                    <p>Mark compromised accounts, run targeted queries to find escalation paths from your current foothold. Owned principals highlighted throughout all output.</p>
+                </div>
+            </div>
+
+            <div class="pills">
+                <span class="pill">ACL Abuse</span>
+                <span class="pill">ADCS ESC1-ESC15</span>
+                <span class="pill">Kerberoasting</span>
+                <span class="pill">DCSync</span>
+                <span class="pill">Delegation</span>
+                <span class="pill">Lateral Movement</span>
+                <span class="pill">Azure/Hybrid</span>
+                <span class="pill">GPO Abuse</span>
+                <span class="pill">Exchange</span>
+                <span class="pill">Coercion Relay</span>
+                <span class="pill">BloodHound CE API</span>
+                <span class="pill">HMAC Auth</span>
+                <span class="pill">Rich Terminal UI</span>
+                <span class="pill">Catppuccin Mocha</span>
+                <span class="pill">Shell Completion</span>
+                <span class="pill">Plugin System</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-label">Architecture</div>
+            <h2 class="section-title">Layered Design</h2>
+            <p class="section-desc">CLI commands connect to Neo4j, execute Cypher queries via the core engine, and render results through the display layer.</p>
+
+            <div class="arch-grid">
+                <div class="arch-card">
+                    <h4 style="color: var(--green)">cli/</h4>
+                    <p>Click CLI framework with global options, context manager, and 11 command modules</p>
+                </div>
+                <div class="arch-card">
+                    <h4 style="color: var(--teal)">core/</h4>
+                    <p>BloodHoundCE class, Neo4j driver, Cypher utilities, risk scoring, domain filtering</p>
+                </div>
+                <div class="arch-card">
+                    <h4 style="color: var(--green)">display/</h4>
+                    <p>Rich tables, panels, trees, progress bars, Catppuccin Mocha theme, HTML reports</p>
+                </div>
+                <div class="arch-card">
+                    <h4 style="color: var(--teal)">queries/</h4>
+                    <p>177 queries in 15 category folders, self-registering via @register_query decorator</p>
+                </div>
+                <div class="arch-card">
+                    <h4 style="color: var(--green)">abuse/</h4>
+                    <p>YAML template loader with exploitation commands per technique</p>
+                </div>
+                <div class="arch-card">
+                    <h4 style="color: var(--teal)">api/</h4>
+                    <p>BloodHound CE API integration -- HMAC auth, ingest, clear, history</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-label">Getting Started</div>
+            <h2 class="section-title">Install and Audit</h2>
+            <p class="section-desc">pip install, point at Neo4j, and run 177 queries against your BloodHound CE data.</p>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span class="terminal-dot" style="background: #f38ba8"></span>
+                    <span class="terminal-dot" style="background: #f9e2af"></span>
+                    <span class="terminal-dot" style="background: #a6e3a1"></span>
+                    <span class="terminal-title">install.sh</span>
+                </div>
+                <div class="terminal-body">
+                    <span class="comment"># Install (pipx recommended)</span><br>
+                    <span class="prompt">$</span> <span class="cmd">pipx install</span> <span class="string">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span><br><br>
+                    <span class="comment"># Run all 177 queries</span><br>
+                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">'bloodhoundcommunityedition'</span> <span class="cmd">run all</span><br><br>
+                    <span class="comment"># Quick wins summary</span><br>
+                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">'pass'</span> <span class="cmd">quickwins</span>
+                </div>
+            </div>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span class="terminal-dot" style="background: #f38ba8"></span>
+                    <span class="terminal-dot" style="background: #f9e2af"></span>
+                    <span class="terminal-dot" style="background: #a6e3a1"></span>
+                    <span class="terminal-title">investigate.sh</span>
+                </div>
+                <div class="terminal-body">
+                    <span class="comment"># Investigate a specific node</span><br>
+                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="cmd">investigate</span> <span class="string">USER@CORP.LOCAL</span><br><br>
+                    <span class="comment"># Run with abuse commands</span><br>
+                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="flag">--abuse</span> <span class="cmd">run acl adcs</span><br><br>
+                    <span class="comment"># JSON output piped to jq</span><br>
+                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="flag">-o json</span> <span class="cmd">run all</span> | <span class="cmd">jq</span> <span class="string">'.[] | select(.count > 0)'</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Issues</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/LICENSE">MIT License</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CONTRIBUTING.md">Contributing</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/SECURITY.md">Security</a>
+            </div>
+            <p class="footer-toolkit">
+                <a href="https://github.com/Real-Fruit-Snacks/Aquifer">Aquifer</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Cascade">Cascade</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Conduit">Conduit</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/HydroShot">HydroShot</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Riptide">Riptide</a> &middot;
+                <strong>Runoff</strong> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Seep">Seep</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Slipstream">Slipstream</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Tidepool">Tidepool</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Undertow">Undertow</a> &middot;
+                <a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a>
             </p>
-          </div>
+            <p class="footer-brand">
+                Part of the <a href="https://github.com/Real-Fruit-Snacks">Real-Fruit-Snacks</a> water-themed security toolkit
+            </p>
         </div>
-
-        <hr class="arch-divider">
-
-        <div class="arch-stack">
-          <span>Python 3.9+</span>
-          <span>Neo4j</span>
-          <span>Click</span>
-          <span>Rich</span>
-          <span>PyYAML</span>
-          <span>Requests</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ STATS ============ -->
-  <section id="coverage">
-    <span class="section-label">// coverage</span>
-    <h2 class="section-title">Comprehensive AD security coverage</h2>
-    <p class="section-desc">
-      15 query categories targeting every major Active Directory attack surface.
-    </p>
-
-    <div class="kb-grid">
-      <div class="kb-card">
-        <div class="kb-number">177</div>
-        <div class="kb-label">Security Queries</div>
-        <div class="kb-desc">Cypher queries targeting misconfigurations, attack paths, and privilege escalation</div>
-      </div>
-
-      <div class="kb-card">
-        <div class="kb-number">15</div>
-        <div class="kb-label">Categories</div>
-        <div class="kb-desc">From ACL abuse and ADCS to lateral movement and Azure hybrid attacks</div>
-      </div>
-
-      <div class="kb-card">
-        <div class="kb-number">15</div>
-        <div class="kb-label">ADCS ESC Checks</div>
-        <div class="kb-desc">ESC1 through ESC15 coverage for AD Certificate Services abuse</div>
-      </div>
-
-      <div class="kb-card">
-        <div class="kb-number">5</div>
-        <div class="kb-label">Output Formats</div>
-        <div class="kb-desc">Terminal tables, JSON for automation, CSV for spreadsheets, Markdown, HTML reports</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ CATEGORY TABLE ============ -->
-  <section id="categories">
-    <span class="section-label">// query categories</span>
-    <h2 class="section-title">15 categories. Every attack surface.</h2>
-    <p class="section-desc">
-      From ACL abuse to Azure hybrid attacks, each category targets a specific Active Directory attack surface.
-    </p>
-
-    <div class="ranking-table-wrap">
-      <table class="ranking-table">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Queries</th>
-            <th>Example Findings</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>ACL Abuse</td>
-            <td class="highlight">25</td>
-            <td>GenericAll, WriteDacl, Shadow Admins, GPO control</td>
-          </tr>
-          <tr>
-            <td>GPO Abuse</td>
-            <td class="highlight">3</td>
-            <td>GPO controllers, GPOs linked to OUs with DCs, GPO creator owners</td>
-          </tr>
-          <tr>
-            <td>Security Hygiene</td>
-            <td class="highlight">23</td>
-            <td>Stale accounts, missing LAPS, unsupported OS</td>
-          </tr>
-          <tr>
-            <td>ADCS</td>
-            <td class="highlight">18</td>
-            <td>ESC1-ESC15, golden certificates, CA abuse</td>
-          </tr>
-          <tr>
-            <td>Privilege Escalation</td>
-            <td class="highlight">18</td>
-            <td>Kerberoasting, AS-REP, DCSync, SID History</td>
-          </tr>
-          <tr>
-            <td>Lateral Movement</td>
-            <td class="highlight">18</td>
-            <td>Admin sessions, RDP access, NTLM relay, SQL admin</td>
-          </tr>
-          <tr>
-            <td>Basic Info</td>
-            <td class="highlight">16</td>
-            <td>Domain stats, trusts, tier-zero count, functional level</td>
-          </tr>
-          <tr>
-            <td>Delegation</td>
-            <td class="highlight">11</td>
-            <td>Unconstrained, constrained, RBCD, coercion chains</td>
-          </tr>
-          <tr>
-            <td>Owned</td>
-            <td class="highlight">11</td>
-            <td>Paths from owned to DA, DCSync, high value, ADCS</td>
-          </tr>
-          <tr>
-            <td>Dangerous Groups</td>
-            <td class="highlight">10</td>
-            <td>Account/Server/Print/Backup Operators, Schema Admins</td>
-          </tr>
-          <tr>
-            <td>Azure/Hybrid</td>
-            <td class="highlight">9</td>
-            <td>AAD Connect, hybrid attack surface, sync accounts</td>
-          </tr>
-          <tr>
-            <td>Attack Paths</td>
-            <td class="highlight">6</td>
-            <td>Shortest paths to DA, busiest paths, cross-domain</td>
-          </tr>
-          <tr>
-            <td>Miscellaneous</td>
-            <td class="highlight">3</td>
-            <td>Circular groups, duplicate SPNs, security tools</td>
-          </tr>
-          <tr>
-            <td>Exchange</td>
-            <td class="highlight">5</td>
-            <td>Exchange domain rights, Exchange groups</td>
-          </tr>
-          <tr>
-            <td>Credentials</td>
-            <td class="highlight">1</td>
-            <td>Password in description attributes</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ============ GETTING STARTED ============ -->
-  <section id="getting-started">
-    <span class="section-label">// quickstart</span>
-    <h2 class="section-title">Running in 60 seconds</h2>
-    <p class="section-desc">
-      Install with pipx, point at your BloodHound CE Neo4j database, and start finding attack paths. Python 3.9+ is the only requirement.
-    </p>
-
-    <div class="start-row">
-      <div class="start-terminal">
-        <div class="start-titlebar">
-          <span class="hero-dot hero-dot--red"></span>
-          <span class="hero-dot hero-dot--yellow"></span>
-          <span class="hero-dot hero-dot--green"></span>
-          <span class="start-titlebar-text">bash</span>
-        </div>
-        <div class="start-body">
-          <div class="start-line">
-            <span class="comment"># Install with pipx (recommended)</span>
-          </div>
-          <div class="start-line" style="margin-bottom:16px;">
-            <span class="prompt">$</span> <span class="cmd">pipx install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span>
-          </div>
-          <div class="start-line">
-            <span class="comment"># Or install with pip</span>
-          </div>
-          <div class="start-line" style="margin-bottom:16px;">
-            <span class="prompt">$</span> <span class="cmd">pip install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span>
-          </div>
-          <div class="start-line">
-            <span class="comment"># Run all security queries</span>
-          </div>
-          <div class="start-line" style="margin-bottom:16px;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">'bloodhoundcommunityedition'</span> <span class="cmd">run all</span>
-          </div>
-          <div class="start-line" style="margin-top:16px;margin-bottom:0;">
-            <span class="comment"># Quick wins:</span>
-          </div>
-          <div class="start-line" style="margin-bottom:0;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">pass</span> <span class="cmd">kerberoastable</span> <span class="comment">&nbsp;&nbsp;# Kerberoastable users</span>
-          </div>
-          <div class="start-line" style="margin-bottom:0;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">pass</span> <span class="cmd">run acl</span> <span class="flag">-s</span> <span class="arg">HIGH</span> <span class="comment">&nbsp;&nbsp;# High-severity ACL</span>
-          </div>
-          <div class="start-line" style="margin-bottom:0;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">pass</span> <span class="flag">--abuse</span> <span class="cmd">run adcs</span> <span class="comment">&nbsp;&nbsp;# ADCS + abuse cmds</span>
-          </div>
-          <div class="start-line" style="margin-bottom:0;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">pass</span> <span class="cmd">path da</span> <span class="arg">USER@CORP.LOCAL</span>
-          </div>
-          <div class="start-line" style="margin-bottom:0;">
-            <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="arg">pass</span> <span class="flag">--output</span> <span class="arg">json</span> <span class="cmd">run all</span> <span class="comment">&nbsp;&nbsp;# JSON output</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="start-info">
-      <p>
-        <strong style="color:var(--ctp-text);">pipx</strong> is the recommended install method -- it creates an isolated environment and keeps your system Python clean. <a href="https://pipx.pypa.io/" style="color:var(--ctp-teal);">Install pipx</a> if you don't have it yet.
-      </p>
-      <p>
-        Point Runoff at your BloodHound CE Neo4j instance. Default connection: <code>bolt://127.0.0.1:7687</code> with <code>neo4j</code> user.
-      </p>
-      <p>
-        Use <code>-s CRITICAL,HIGH</code> to filter by severity, <code>--abuse</code> for exploitation commands, <code>-d CORP.LOCAL</code> to filter by domain.
-      </p>
-      <p>
-        Export as <strong style="color:var(--ctp-text);">JSON</strong> for automation, <strong style="color:var(--ctp-text);">CSV</strong> for spreadsheets, <strong style="color:var(--ctp-text);">Markdown</strong> for documentation, or <strong style="color:var(--ctp-text);">HTML</strong> for management reports.
-      </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ FOOTER ============ -->
-  <footer class="site-footer">
-    <p class="footer-tagline">Extract quick wins. Find attack paths before attackers do.</p>
-    <nav class="footer-links" aria-label="Footer links">
-      <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
-      <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/LICENSE">License (MIT)</a>
-      <a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Report Issue</a>
-    </nav>
-    <p class="footer-copy">Runoff -- Active Directory security audit tool</p>
-    <p class="footer-disclaimer">
-      For authorized security testing, CTF competitions, and educational purposes only.
-      Always obtain proper authorization before testing on systems you do not own.
-    </p>
-  </footer>
-
-</div>
+    </footer>
 
 </body>
 </html>
