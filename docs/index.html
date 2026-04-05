@@ -3,561 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runoff — Active Directory Security Audit Tool</title>
-    <meta name="description" content="Active Directory security audit tool. Extract quick wins, attack paths, and misconfigurations from BloodHound CE with 177 security queries in 15 categories.">
+    <title>Runoff — Find the Attack Path</title>
+    <meta name="description" content="Active Directory security audit extracting attack paths from BloodHound CE. 177 queries across 15 categories with exploitation guidance and multi-format reporting.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Inter,sans-serif' font-size='24' font-weight='800' fill='%2394e2d5'%3ER%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --red: #f38ba8;
-            --maroon: #eba0ac;
-            --pink: #f5c2e7;
-            --mauve: #cba6f7;
-            --lavender: #b4befe;
-            --blue: #89b4fa;
-            --sapphire: #74c7ec;
-            --sky: #89dceb;
-            --teal: #94e2d5;
-            --green: #a6e3a1;
-            --yellow: #f9e2af;
-            --peach: #fab387;
-            --text: #cdd6f4;
-            --subtext1: #bac2de;
-            --subtext0: #a6adc8;
-            --overlay2: #9399b2;
-            --overlay1: #7f849c;
-            --overlay0: #6c7086;
-            --surface2: #585b70;
-            --surface1: #45475a;
-            --surface0: #313244;
-            --base: #1e1e2e;
-            --mantle: #181825;
-            --crust: #11111b;
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --accent1:#94e2d5;--accent2:#a6e3a1;--accentmid:#89dceb;
+            --accentrgb:148,226,213;
+            --text:#cdd6f4;--sub1:#bac2de;--sub0:#a6adc8;
+            --ov2:#9399b2;--ov1:#7f849c;--ov0:#6c7086;
+            --sf2:#585b70;--sf1:#45475a;--sf0:#313244;
+            --base:#1e1e2e;--mantle:#181825;--crust:#11111b;
+            --green:#a6e3a1;--yellow:#f9e2af;--red:#f38ba8;
+            --peach:#fab387;--mauve:#cba6f7;--teal:#94e2d5;
         }
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--crust);color:var(--text);line-height:1.7;overflow-x:hidden}
+        ::selection{background:rgba(var(--accentrgb),0.3);color:var(--text)}
+        .container{max-width:1140px;margin:0 auto;padding:0 28px}
+        code{font-family:'JetBrains Mono',monospace;background:var(--mantle);padding:2px 7px;border-radius:3px;font-size:.88em;color:var(--green)}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ── Nav ── */
+        .nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(17,17,27,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(49,50,68,0.5);z-index:1000;display:flex;align-items:center;justify-content:center}
+        .nav-inner{max-width:1140px;width:100%;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--text);text-decoration:none}
+        .nav-links{display:flex;align-items:center;gap:28px}
+        .nav-links a{font-size:13px;font-weight:500;color:var(--ov0);text-decoration:none;transition:color .2s}
+        .nav-links a:hover{color:var(--text)}
+        .nav-cta{background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);padding:7px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:box-shadow .2s,transform .2s}
+        .nav-cta:hover{box-shadow:0 0 20px rgba(var(--accentrgb),0.3);transform:translateY(-1px)}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--base);
-            color: var(--text);
-            line-height: 1.7;
-            overflow-x: hidden;
-        }
+        /* ── Hero ── */
+        .hero{padding:140px 0 80px;text-align:center;position:relative}
+        .hero::before{content:'';position:absolute;top:60px;left:50%;transform:translateX(-50%);width:800px;height:400px;background:radial-gradient(ellipse,rgba(var(--accentrgb),0.08) 0%,transparent 60%);pointer-events:none}
+        .hero-logo{position:relative;max-width:600px;margin:0 auto 32px}
+        .hero-logo img{width:100%;height:auto}
+        .hero-tagline{position:relative;font-size:clamp(24px,3.5vw,38px);font-weight:700;line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero-desc{position:relative;font-size:16px;color:var(--ov0);max-width:560px;margin:0 auto 32px}
+        .hero-ctas{position:relative;display:flex;gap:12px;justify-content:center;margin-bottom:48px}
+        .btn-primary{background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);padding:12px 28px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;text-decoration:none;transition:box-shadow .2s,transform .2s}
+        .btn-primary:hover{box-shadow:0 0 24px rgba(var(--accentrgb),0.35);transform:translateY(-2px)}
+        .btn-secondary{background:var(--sf0);color:var(--text);padding:12px 28px;border-radius:8px;border:1px solid var(--sf1);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;text-decoration:none;transition:all .2s}
+        .btn-secondary:hover{background:var(--sf1);border-color:var(--sf2)}
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: radial-gradient(circle, var(--overlay0) 1px, transparent 1px);
-            background-size: 24px 24px;
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: -1;
-        }
+        /* ── Terminal ── */
+        .terminal{position:relative;max-width:800px;margin:0 auto;background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 24px rgba(var(--accentrgb),0.06)}
+        .terminal-bar{background:var(--crust);padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sf0)}
+        .terminal-dot{width:12px;height:12px;border-radius:50%}
+        .terminal-dot:nth-child(1){background:var(--red)}
+        .terminal-dot:nth-child(2){background:var(--yellow)}
+        .terminal-dot:nth-child(3){background:var(--green)}
+        .terminal-label{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ov0)}
+        .terminal-body{padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;text-align:left}
+        .terminal-body pre{margin:0;white-space:pre-wrap;word-wrap:break-word}
+        .t-g{color:var(--green)}.t-b{color:var(--accent1)}.t-m{color:var(--sub0)}.t-p{color:var(--peach)}
 
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0.4;
-        }
+        /* ── Stats ── */
+        .stats{display:flex;justify-content:center;gap:40px;padding:60px 0;position:relative}
+        .stat{text-align:center}
+        .stat-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:var(--accent1);line-height:1}
+        .stat-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sf2);margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+        .stat-div{width:1px;height:48px;background:var(--sf0);align-self:center}
 
-        ::selection { background: rgba(166, 227, 161, 0.3); color: var(--text); }
+        /* ── Sections ── */
+        section{padding:80px 0}
+        .section-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent1);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+        .section-title{font-size:clamp(28px,4vw,40px);font-weight:700;margin-bottom:12px;letter-spacing:-.02em}
+        .section-desc{font-size:15px;color:var(--ov0);margin-bottom:48px;max-width:560px}
+        .gradient-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin:0 auto;max-width:600px}
 
-        code {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--mantle);
-            padding: 2px 7px;
-            border-radius: 3px;
-            font-size: 0.88em;
-            color: var(--green);
-        }
+        /* ── Bento ── */
+        .bento{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+        .bento-card{background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;padding:28px;transition:all .25s;position:relative;overflow:hidden}
+        .bento-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent1),var(--accent2));opacity:0;transition:opacity .25s}
+        .bento-card:hover{transform:translateY(-3px);border-color:var(--sf1);box-shadow:0 12px 32px rgba(0,0,0,0.25),0 0 20px rgba(var(--accentrgb),0.06)}
+        .bento-card:hover::before{opacity:1}
+        .bento-hero{grid-column:span 2}
+        .bento-card h3{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--accent1);margin-bottom:8px}
+        .bento-card p{font-size:13.5px;color:var(--sub0);line-height:1.6}
+        .bento-card .mini-terminal{background:var(--crust);border-radius:8px;padding:14px;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;text-align:left}
+        .bento-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+        .bento-stat .big{font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;color:var(--accent1)}
+        .bento-stat .label{font-size:12px;color:var(--sf2);margin-top:4px;letter-spacing:1px}
 
-        .container { max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+        /* ── Pills ── */
+        .pills{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+        .pill{background:var(--mantle);border:1px solid var(--sf0);border-radius:20px;padding:9px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;display:flex;align-items:center;gap:8px;transition:all .2s;color:var(--sub0)}
+        .pill:hover{border-color:var(--sf1);background:var(--base)}
+        .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .dot-g{background:var(--green)}.dot-y{background:var(--yellow)}.dot-n{background:var(--sf2)}
 
-        .hero {
-            padding: 100px 0 70px;
-            text-align: center;
-            position: relative;
-        }
+        /* ── Arch ── */
+        .arch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+        .arch-card{background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;padding:28px;transition:border-color .2s}
+        .arch-card:hover{border-color:var(--sf1)}
+        .arch-num{display:inline-flex;width:30px;height:30px;background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-bottom:14px}
+        .arch-card h3{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-bottom:8px}
+        .arch-card p{font-size:13.5px;color:var(--sub0);line-height:1.6}
 
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 10%;
-            right: 10%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--surface1), transparent);
-        }
+        /* ── Two Col ── */
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 
-        .hero-logo {
-            width: 420px;
-            max-width: 85%;
-            margin: 0 auto 32px;
-            display: block;
-        }
+        /* ── Detection ── */
+        .detect-card{background:var(--mantle);border-radius:12px;padding:28px}
+        .detect-card h3{font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+        .detect-card ul{list-style:none;font-size:13px;color:var(--sub0);line-height:2.2}
+        .detect-hidden{border-left:3px solid var(--green)}.detect-hidden h3{color:var(--green)}
+        .detect-visible{border-left:3px solid var(--yellow)}.detect-visible h3{color:var(--yellow)}
 
-        .hero-tagline {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 16px;
-        }
+        /* ── Footer ── */
+        footer{padding:48px 0;margin-top:40px}
+        .footer-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin-bottom:48px}
+        .footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+        .footer-grid h4{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);margin-bottom:14px;letter-spacing:2px;text-transform:uppercase}
+        .footer-grid ul{list-style:none}
+        .footer-grid li{margin-bottom:8px}
+        .footer-grid a{color:var(--ov2);text-decoration:none;font-size:13px;transition:color .2s}
+        .footer-grid a:hover{color:var(--accent1)}
+        .footer-grid p{font-size:13px;color:var(--ov1);line-height:1.7}
+        .footer-bottom{text-align:center;margin-top:36px;padding-top:24px;border-top:1px solid var(--sf0);font-size:12px;color:var(--ov0)}
 
-        .hero-desc {
-            font-size: 1.02rem;
-            color: var(--subtext0);
-            max-width: 640px;
-            margin: 0 auto 28px;
-            line-height: 1.8;
-        }
+        /* ── Animate ── */
+        .animate{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+        .animate.visible{opacity:1;transform:translateY(0)}
+        .animate-scale{opacity:0;transform:translateY(24px) scale(.97);transition:opacity .8s ease,transform .8s ease}
+        .animate-scale.visible{opacity:1;transform:translateY(0) scale(1)}
 
-        .hero-warning {
-            display: inline-block;
-            background: rgba(243, 139, 168, 0.08);
-            border: 1px solid rgba(243, 139, 168, 0.2);
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 0.82rem;
-            color: var(--subtext0);
-            margin-bottom: 32px;
-        }
+        /* ── Responsive ── */
+        @media(max-width:960px){.bento{grid-template-columns:1fr 1fr}.bento-hero{grid-column:span 2}.two-col,.arch-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:repeat(2,1fr)}.stats{flex-wrap:wrap;gap:24px}}
+        @media(max-width:600px){.container{padding:0 16px}.hero{padding:100px 0 48px}.bento{grid-template-columns:1fr}.bento-hero{grid-column:span 1}.stats{gap:16px}.stat-div{display:none}.nav-links a:not(.nav-cta){display:none}.footer-grid{grid-template-columns:1fr}.pills{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
 
-        .hero-warning strong { color: var(--red); }
-
-        .stats {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 32px;
-        }
-
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--surface0);
-            border: 1px solid var(--surface1);
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            color: var(--subtext1);
-        }
-
-        .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-        .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-        .cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .cta-primary {
-            background: linear-gradient(135deg, var(--teal), var(--green));
-            color: var(--crust);
-        }
-
-        .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(166, 227, 161, 0.2); }
-
-        .cta-secondary {
-            background: var(--surface0);
-            color: var(--text);
-            border: 1px solid var(--surface1);
-        }
-
-        .cta-secondary:hover { border-color: var(--green); color: var(--green); }
-
-        .section { padding: 80px 0; position: relative; }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 10%;
-            right: 10%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--surface1), transparent);
-        }
-
-        .section-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--green);
-            margin-bottom: 8px;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, var(--text), var(--subtext0));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .section-desc {
-            font-size: 1rem;
-            color: var(--overlay2);
-            max-width: 600px;
-            margin-bottom: 40px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .feature-card {
-            background: var(--mantle);
-            border: 1px solid var(--surface0);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.25s;
-        }
-
-        .feature-card:hover {
-            border-color: var(--surface1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-
-        .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-        .feature-card p { font-size: 0.88rem; color: var(--overlay2); line-height: 1.7; }
-
-        .pills { display: flex; flex-wrap: wrap; gap: 8px; }
-
-        .pill {
-            background: var(--surface0);
-            border: 1px solid var(--surface1);
-            border-radius: 20px;
-            padding: 5px 14px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            color: var(--subtext0);
-            transition: all 0.2s;
-        }
-
-        .pill:hover { border-color: var(--green); color: var(--green); }
-
-        .arch-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-        }
-
-        .arch-card {
-            background: var(--mantle);
-            border: 1px solid var(--surface0);
-            border-radius: 10px;
-            padding: 20px;
-        }
-
-        .arch-card h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-        .arch-card p { font-size: 0.82rem; color: var(--overlay2); line-height: 1.6; }
-
-        .terminal {
-            background: var(--mantle);
-            border: 1px solid var(--surface0);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .terminal-header {
-            background: var(--surface0);
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-        .terminal-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            color: var(--overlay2);
-            margin-left: 8px;
-        }
-
-        .terminal-body {
-            padding: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.82rem;
-            line-height: 1.9;
-            color: var(--subtext1);
-            overflow-x: auto;
-        }
-
-        .terminal-body .comment { color: var(--overlay0); }
-        .terminal-body .cmd { color: var(--green); }
-        .terminal-body .flag { color: var(--teal); }
-        .terminal-body .string { color: var(--peach); }
-        .terminal-body .prompt { color: var(--overlay0); }
-
-        .footer {
-            border-top: 1px solid var(--surface0);
-            padding: 48px 0;
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
-
-        .footer-links a {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--overlay2);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover { color: var(--green); }
-
-        .footer-toolkit { font-size: 0.78rem; color: var(--overlay0); margin-bottom: 8px; }
-        .footer-toolkit a { color: var(--overlay1); text-decoration: none; }
-        .footer-toolkit a:hover { color: var(--green); }
-
-        .footer-brand {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            color: var(--surface2);
-        }
-
-        .footer-brand a { color: var(--green); text-decoration: none; }
-
-        @media (max-width: 768px) {
-            .hero { padding: 60px 0 50px; }
-            .hero-logo { width: 280px; }
-            .section-title { font-size: 1.5rem; }
-            .features-grid { grid-template-columns: 1fr; }
-            .arch-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 480px) {
-            .arch-grid { grid-template-columns: 1fr; }
-        }
+        a:focus-visible{outline:2px solid var(--accent1);outline-offset:2px}
     </style>
 </head>
 <body>
 
+    <!-- Nav -->
+    <nav class="nav"><div class="nav-inner">
+        <a href="#" class="nav-logo">Runoff</a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#architecture">Architecture</a>
+            <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
+            <a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest" class="nav-cta">Download</a>
+        </div>
+    </div></nav>
+
+    <!-- Hero -->
     <section class="hero">
         <div class="container">
-            <img src="assets/logo-dark.svg" alt="Runoff" class="hero-logo">
-
-            <p class="hero-tagline">Active Directory Security Audit Tool</p>
-
-            <p class="hero-desc">
-                Extract quick wins, attack paths, and misconfigurations from BloodHound Community Edition. 177 security queries across 15 categories with exploitation guidance, severity ratings, and multi-format reporting.
-            </p>
-
-            <div class="hero-warning">
-                <strong>Authorization Required:</strong> This tool is designed exclusively for authorized security testing with explicit written permission.
+            <div class="hero-logo animate"><img src="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-dark.svg" alt="Runoff"></div>
+            <h1 class="hero-tagline animate" style="transition-delay:.1s">Find the attack path</h1>
+            <p class="hero-desc animate" style="transition-delay:.2s">Active Directory security audit extracting attack paths from BloodHound CE. Automated analysis and reporting across 177 queries in 15 categories.</p>
+            <div class="hero-ctas animate" style="transition-delay:.3s">
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest" class="btn-primary">Download Latest</a>
+                <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="btn-secondary">View Source</a>
             </div>
+            <div class="terminal animate-scale" style="transition-delay:.4s">
+                <div class="terminal-bar">
+                    <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+                    <span class="terminal-label">runoff</span>
+                </div>
+                <div class="terminal-body"><pre><span class="t-g">$</span> runoff -p 'bloodhound' run all
+<span class="t-b">connected to neo4j://localhost:7687</span>
+<span class="t-b">running 177 queries across 15 categories...</span>
+<span class="t-p">[ACL]  12 findings  (3 critical, 5 high)</span>
+<span class="t-p">[ADCS] 8 findings   (2 critical)</span>
 
-            <div class="stats">
-                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> 177 Queries</div>
-                <div class="stat"><span class="stat-dot" style="background: var(--teal)"></span> 15 Categories</div>
-                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> ADCS ESC1-ESC15</div>
-                <div class="stat"><span class="stat-dot" style="background: var(--teal)"></span> Abuse Commands</div>
-                <div class="stat"><span class="stat-dot" style="background: var(--green)"></span> BloodHound CE API</div>
-            </div>
-
-            <div class="ctas">
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="cta cta-primary">View on GitHub</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff#quick-start" class="cta cta-secondary">Quick Start</a>
+<span class="t-g">$</span> runoff -p 'bloodhound' quickwins
+<span class="t-m">1. Kerberoastable admin  (critical)</span>
+<span class="t-m">2. DCSync rights         (critical)</span>
+<span class="t-m">3. Unconstrained deleg   (high)</span></pre></div>
             </div>
         </div>
     </section>
 
-    <section class="section">
-        <div class="container">
-            <div class="section-label">Features</div>
-            <h2 class="section-title">Comprehensive AD Audit</h2>
-            <p class="section-desc">Query BloodHound CE data for attack paths, misconfigurations, and privilege escalation opportunities with exploitation guidance.</p>
+    <!-- Stats -->
+    <div class="container">
+        <div class="stats animate">
+            <div class="stat"><div class="stat-num" data-target="177">0</div><div class="stat-label">Queries</div></div>
+            <div class="stat-div"></div>
+            <div class="stat"><div class="stat-num" data-target="15">0</div><div class="stat-label">Categories</div></div>
+            <div class="stat-div"></div>
+            <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-label">Formats</div></div>
+            <div class="stat-div"></div>
+            <div class="stat"><div class="stat-num" data-target="3">0</div><div class="stat-label">Platforms</div></div>
+        </div>
+        <div class="gradient-line"></div>
+    </div>
 
-            <div class="features-grid">
-                <div class="feature-card">
+    <!-- Features Bento -->
+    <section id="features">
+        <div class="container">
+            <div class="section-label animate">FEATURES</div>
+            <h2 class="section-title animate" style="transition-delay:.08s">177 queries, zero touches</h2>
+            <p class="section-desc animate" style="transition-delay:.16s">Queries BloodHound CE Neo4j data. Finds attack paths, misconfigurations, and privilege escalation opportunities with abuse commands.</p>
+
+            <div class="bento">
+                <div class="bento-card bento-hero animate" style="transition-delay:.1s">
                     <h3>177 Security Queries</h3>
-                    <p>ACL abuse, ADCS ESC1-ESC15, delegation, coercion relay, lateral movement, Azure/hybrid, and credential attacks -- all registered via decorator and runnable by category.</p>
+                    <p>Queries span 15 categories — ACL abuse, ADCS ESC1-ESC15, delegation, coercion relay, lateral movement, Azure/hybrid, Kerberoasting, DCSync, GPO abuse, and Exchange.</p>
+                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass run acl adcs delegation<br><span class="t-p">[ACL] 12 findings</span><br><span class="t-p">[ADCS] 8 findings</span></div>
                 </div>
-                <div class="feature-card">
-                    <h3>Node Investigation</h3>
-                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins in a single command. Wildcard patterns trigger triage mode.</p>
+                <div class="bento-card bento-stat animate" style="transition-delay:.18s">
+                    <div class="big">177</div>
+                    <div class="label">Security Queries</div>
                 </div>
-                <div class="feature-card">
-                    <h3>Abuse Commands</h3>
-                    <p>Exploitation commands alongside every finding -- Impacket, Certipy, bloodyAD, Rubeus -- with auto-substituted targets, domains, and OPSEC warnings.</p>
+                <div class="bento-card animate" style="transition-delay:.2s">
+                    <h3 style="color:var(--mauve)">Node Investigation</h3>
+                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins. Wildcard triage mode for bulk investigation.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>Multi-Format Output</h3>
-                    <p>Table, JSON, CSV, HTML, and Markdown reports from a single run. Structured output to stdout, status to stderr. Pipe-friendly for jq and csvtool.</p>
+                <div class="bento-card animate" style="transition-delay:.28s">
+                    <h3 style="color:var(--green)">Abuse Commands</h3>
+                    <p>Exploitation commands alongside every finding — Impacket, Certipy, bloodyAD, Rubeus — with auto-substituted targets, domains, and OPSEC warnings.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>Path Finding</h3>
-                    <p>Shortest paths to Domain Admins, Domain Controllers, or between arbitrary nodes. Tree-view rendering with relationship labels and hop counts.</p>
+                <div class="bento-card animate" style="transition-delay:.36s">
+                    <h3 style="color:var(--peach)">Multi-Format Output</h3>
+                    <p>Table, JSON, CSV, HTML, and Markdown reports from a single run. Structured output to stdout, status to stderr for clean piping.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>Owned Tracking</h3>
-                    <p>Mark compromised accounts, run targeted queries to find escalation paths from your current foothold. Owned principals highlighted throughout all output.</p>
+                <div class="bento-card bento-stat animate" style="transition-delay:.1s">
+                    <div class="big" style="color:var(--teal)">15</div>
+                    <div class="label">Categories</div>
+                </div>
+                <div class="bento-card bento-hero animate" style="transition-delay:.18s">
+                    <h3 style="color:var(--red)">Owned Tracking</h3>
+                    <p>Mark compromised accounts and run targeted queries from your current foothold. Executive summary with domain profile, security posture, and prioritized next steps.</p>
+                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass own add USER@CORP.LOCAL<br><span class="t-b">marked USER@CORP.LOCAL as owned</span><br><span class="t-g">$</span> runoff -p pass run --from-owned</div>
+                </div>
+                <div class="bento-card animate" style="transition-delay:.26s">
+                    <h3 style="color:var(--yellow)">BloodHound CE API</h3>
+                    <p>Ingest SharpHound data, view collection history, and manage the database without a browser. Plugin system for custom queries.</p>
                 </div>
             </div>
+        </div>
+    </section>
 
+    <!-- Capabilities -->
+    <section style="background:var(--mantle)">
+        <div class="container">
+            <div class="section-label animate">CAPABILITIES</div>
+            <h2 class="section-title animate" style="transition-delay:.08s">Query coverage</h2>
+            <p class="section-desc animate" style="transition-delay:.16s">Full query coverage across 15 AD attack categories. Severity filtering, tag-based selection, and custom plugin queries.</p>
             <div class="pills">
-                <span class="pill">ACL Abuse</span>
-                <span class="pill">ADCS ESC1-ESC15</span>
-                <span class="pill">Kerberoasting</span>
-                <span class="pill">DCSync</span>
-                <span class="pill">Delegation</span>
-                <span class="pill">Lateral Movement</span>
-                <span class="pill">Azure/Hybrid</span>
-                <span class="pill">GPO Abuse</span>
-                <span class="pill">Exchange</span>
-                <span class="pill">Coercion Relay</span>
-                <span class="pill">BloodHound CE API</span>
-                <span class="pill">HMAC Auth</span>
-                <span class="pill">Rich Terminal UI</span>
-                <span class="pill">Catppuccin Mocha</span>
-                <span class="pill">Shell Completion</span>
-                <span class="pill">Plugin System</span>
+                <div class="pill animate"><span class="dot dot-g"></span>ACL Abuse</div>
+                <div class="pill animate"><span class="dot dot-g"></span>ADCS ESC1-15</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Delegation</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Coercion Relay</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Lateral Movement</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Abuse Commands</div>
+                <div class="pill animate"><span class="dot dot-g"></span>DCSync</div>
+                <div class="pill animate"><span class="dot dot-g"></span>GPO Abuse</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Exchange</div>
+                <div class="pill animate"><span class="dot dot-g"></span>BloodHound CE API</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Credential Attacks</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Owned Tracking</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Abuse Commands</div>
+                <div class="pill animate"><span class="dot dot-g"></span>JSON Export</div>
+                <div class="pill animate"><span class="dot dot-g"></span>HTML Reports</div>
+                <div class="pill animate"><span class="dot dot-g"></span>CSV Export</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Plugin System</div>
+                <div class="pill animate"><span class="dot dot-y"></span>API Integration</div>
+            </div>
+            <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ov0)">
+                <span style="color:var(--green)">●</span> Full &nbsp;
+                <span style="color:var(--yellow)">●</span> Beta &nbsp;
+                <span style="color:var(--sf2)">●</span> Not Supported
             </div>
         </div>
     </section>
 
-    <section class="section">
+    <!-- Architecture -->
+    <section id="architecture">
         <div class="container">
-            <div class="section-label">Architecture</div>
-            <h2 class="section-title">Layered Design</h2>
-            <p class="section-desc">CLI commands connect to Neo4j, execute Cypher queries via the core engine, and render results through the display layer.</p>
-
+            <div class="section-label animate">ARCHITECTURE</div>
+            <h2 class="section-title animate" style="transition-delay:.08s">Query-driven pipeline</h2>
+            <p class="section-desc animate" style="transition-delay:.16s">CLI connects to Neo4j, executes Cypher queries via the core engine, and renders results through the display layer.</p>
             <div class="arch-grid">
-                <div class="arch-card">
-                    <h4 style="color: var(--green)">cli/</h4>
-                    <p>Click CLI framework with global options, context manager, and 11 command modules</p>
+                <div class="arch-card animate" style="transition-delay:.1s"><div class="arch-num">1</div><h3>CLI Layer</h3><p>Click CLI with 11 command modules — <code>run</code>, <code>quickwins</code>, <code>investigate</code>, <code>path</code>, <code>own</code>, <code>summary</code>, <code>api</code>. Severity and tag filtering on all queries.</p></div>
+                <div class="arch-card animate" style="transition-delay:.2s"><div class="arch-num">2</div><h3>Query Engine</h3><p>177 queries in 15 category folders registered via <code>@register_query</code> decorator. Runnable by category, severity, tag, or individually.</p></div>
+                <div class="arch-card animate" style="transition-delay:.3s"><div class="arch-num">3</div><h3>Neo4j Core</h3><p>BloodHoundCE class wrapping the Neo4j Bolt driver. Cypher query execution with parameterized templates and result normalization.</p></div>
+                <div class="arch-card animate" style="transition-delay:.4s"><div class="arch-num">4</div><h3>Display Layer</h3><p>Rich tables, panels, and trees with Catppuccin Mocha theme. Table, JSON, CSV, HTML, and Markdown renderers for structured output.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Getting Started -->
+    <section style="background:var(--mantle)">
+        <div class="container">
+            <div class="section-label animate">GETTING STARTED</div>
+            <h2 class="section-title animate" style="transition-delay:.08s">Install and query</h2>
+            <p class="section-desc animate" style="transition-delay:.16s">Install with pipx. Requires Python 3.9+ and Neo4j with BloodHound CE data loaded.</p>
+            <div class="two-col">
+                <div class="terminal animate" style="transition-delay:.1s">
+                    <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-label">install.sh</span></div>
+                    <div class="terminal-body"><pre><span class="t-g">$</span> git clone https://github.com/Real-Fruit-Snacks/Runoff.git
+<span class="t-g">$</span> cd Runoff && pip install -e .
+
+<span class="t-m"># Or use pipx for isolation</span>
+<span class="t-g">$</span> pipx install git+https://github.com/Real-Fruit-Snacks/Runoff.git
+
+<span class="t-g">$</span> runoff --help
+<span class="t-b">Usage: runoff [OPTIONS] COMMAND</span></pre></div>
                 </div>
-                <div class="arch-card">
-                    <h4 style="color: var(--teal)">core/</h4>
-                    <p>BloodHoundCE class, Neo4j driver, Cypher utilities, risk scoring, domain filtering</p>
-                </div>
-                <div class="arch-card">
-                    <h4 style="color: var(--green)">display/</h4>
-                    <p>Rich tables, panels, trees, progress bars, Catppuccin Mocha theme, HTML reports</p>
-                </div>
-                <div class="arch-card">
-                    <h4 style="color: var(--teal)">queries/</h4>
-                    <p>177 queries in 15 category folders, self-registering via @register_query decorator</p>
-                </div>
-                <div class="arch-card">
-                    <h4 style="color: var(--green)">abuse/</h4>
-                    <p>YAML template loader with exploitation commands per technique</p>
-                </div>
-                <div class="arch-card">
-                    <h4 style="color: var(--teal)">api/</h4>
-                    <p>BloodHound CE API integration -- HMAC auth, ingest, clear, history</p>
+                <div class="terminal animate" style="transition-delay:.25s">
+                    <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-label">usage.sh</span></div>
+                    <div class="terminal-body"><pre><span class="t-m"># Run all 177 queries</span>
+<span class="t-g">$</span> runoff -p 'pass' run all
+
+<span class="t-m"># Quick wins summary</span>
+<span class="t-g">$</span> runoff -p 'pass' quickwins
+
+<span class="t-m"># Investigate a node</span>
+<span class="t-g">$</span> runoff -p pass investigate USER@CORP.LOCAL
+
+<span class="t-m"># JSON output piped to jq</span>
+<span class="t-g">$</span> runoff -p pass -o json run all | jq '.'</pre></div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="section">
+    <!-- Detection -->
+    <section>
         <div class="container">
-            <div class="section-label">Getting Started</div>
-            <h2 class="section-title">Install and Audit</h2>
-            <p class="section-desc">pip install, point at Neo4j, and run 177 queries against your BloodHound CE data.</p>
-
-            <div class="terminal">
-                <div class="terminal-header">
-                    <span class="terminal-dot" style="background: #f38ba8"></span>
-                    <span class="terminal-dot" style="background: #f9e2af"></span>
-                    <span class="terminal-dot" style="background: #a6e3a1"></span>
-                    <span class="terminal-title">install.sh</span>
+            <div class="section-label animate">DETECTION AWARENESS</div>
+            <h2 class="section-title animate" style="transition-delay:.08s">Know the boundaries</h2>
+            <div class="two-col" style="margin-top:32px">
+                <div class="detect-card detect-hidden animate" style="transition-delay:.1s">
+                    <h3>Low Footprint</h3>
+                    <ul>
+                        <li>Read-only — queries data already in BloodHound</li>
+                        <li>No AD contact — only touches Neo4j database</li>
+                        <li>No network scanning — zero active reconnaissance</li>
+                        <li>No credential storage — password passed via CLI flag</li>
+                        <li>No remote execution — purely analytical tool</li>
+                    </ul>
                 </div>
-                <div class="terminal-body">
-                    <span class="comment"># Install (pipx recommended)</span><br>
-                    <span class="prompt">$</span> <span class="cmd">pipx install</span> <span class="string">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span><br><br>
-                    <span class="comment"># Run all 177 queries</span><br>
-                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">'bloodhoundcommunityedition'</span> <span class="cmd">run all</span><br><br>
-                    <span class="comment"># Quick wins summary</span><br>
-                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">'pass'</span> <span class="cmd">quickwins</span>
-                </div>
-            </div>
-
-            <div class="terminal">
-                <div class="terminal-header">
-                    <span class="terminal-dot" style="background: #f38ba8"></span>
-                    <span class="terminal-dot" style="background: #f9e2af"></span>
-                    <span class="terminal-dot" style="background: #a6e3a1"></span>
-                    <span class="terminal-title">investigate.sh</span>
-                </div>
-                <div class="terminal-body">
-                    <span class="comment"># Investigate a specific node</span><br>
-                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="cmd">investigate</span> <span class="string">USER@CORP.LOCAL</span><br><br>
-                    <span class="comment"># Run with abuse commands</span><br>
-                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="flag">--abuse</span> <span class="cmd">run acl adcs</span><br><br>
-                    <span class="comment"># JSON output piped to jq</span><br>
-                    <span class="prompt">$</span> <span class="cmd">runoff</span> <span class="flag">-p</span> <span class="string">pass</span> <span class="flag">-o json</span> <span class="cmd">run all</span> | <span class="cmd">jq</span> <span class="string">'.[] | select(.count > 0)'</span>
+                <div class="detect-card detect-visible animate" style="transition-delay:.2s">
+                    <h3>Visible To</h3>
+                    <ul>
+                        <li>Neo4j logs — Cypher query audit trail</li>
+                        <li>Bolt connection — Neo4j network metadata</li>
+                        <li>Process monitoring — Python process visible</li>
+                        <li>Shell history — CLI invocation logged</li>
+                        <li>File system — output files if exported</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="footer">
+    <!-- Footer -->
+    <footer>
         <div class="container">
-            <div class="footer-links">
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Issues</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/LICENSE">MIT License</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CONTRIBUTING.md">Contributing</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/SECURITY.md">Security</a>
+            <div class="footer-line"></div>
+            <div class="footer-grid">
+                <div><h4>Documentation</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#quick-start">Quick Start</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#features">Features</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#architecture">Architecture</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#security">Security</a></li></ul></div>
+                <div><h4>Resources</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest">Latest Release</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Report Issue</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CONTRIBUTING.md">Contributing</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CHANGELOG.md">Changelog</a></li></ul></div>
+                <div><h4>Toolkit</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Rapids">Rapids</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a></li><li><a href="https://github.com/Real-Fruit-Snacks">View All →</a></li></ul></div>
+                <div><h4>License</h4><p>MIT License<br>Copyright © 2026<br>Real-Fruit-Snacks</p></div>
             </div>
-            <p class="footer-toolkit">
-                <a href="https://github.com/Real-Fruit-Snacks/Aquifer">Aquifer</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Cascade">Cascade</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Conduit">Conduit</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/HydroShot">HydroShot</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Riptide">Riptide</a> &middot;
-                <strong>Runoff</strong> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Seep">Seep</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Slipstream">Slipstream</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Tidepool">Tidepool</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Undertow">Undertow</a> &middot;
-                <a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a>
-            </p>
-            <p class="footer-brand">
-                Part of the <a href="https://github.com/Real-Fruit-Snacks">Real-Fruit-Snacks</a> water-themed security toolkit
-            </p>
+            <div class="footer-bottom">Part of the Real-Fruit-Snacks security toolkit</div>
         </div>
     </footer>
 
+    <script>
+    // Scroll animations
+    const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('visible');obs.unobserve(el.target)}})},{threshold:.1,rootMargin:'0px 0px -50px 0px'});
+    document.querySelectorAll('.animate,.animate-scale').forEach(el=>obs.observe(el));
+
+    // Counter animation
+    function countUp(el){const t=parseInt(el.dataset.target),s=el.dataset.suffix||'',p=el.dataset.prefix||'',d=1500,st=performance.now();function u(n){const pr=Math.min((n-st)/d,1),e=1-Math.pow(1-pr,3);el.textContent=p+Math.floor(t*e)+s;if(pr<1)requestAnimationFrame(u)}requestAnimationFrame(u)}
+    const sobs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){countUp(el.target);sobs.unobserve(el.target)}})},{threshold:.5});
+    document.querySelectorAll('.stat-num').forEach(el=>sobs.observe(el));
+
+    // Nav scroll
+    window.addEventListener('scroll',()=>{document.querySelector('.nav').style.borderBottomColor=window.scrollY>20?'rgba(49,50,68,0.8)':'rgba(49,50,68,0.3)'});
+    </script>
 </body>
 </html>
