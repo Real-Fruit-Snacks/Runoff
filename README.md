@@ -1,35 +1,25 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="Runoff" width="800">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-light.svg">
+  <img alt="Runoff" src="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-dark.svg" width="520">
+</picture>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-green.svg)](https://www.python.org/downloads/)
 [![Neo4j](https://img.shields.io/badge/Neo4j-5.0%2B-blue.svg)](https://neo4j.com/)
 [![BloodHound CE](https://img.shields.io/badge/BloodHound-CE-red.svg)](https://bloodhound.specterops.io/)
 
-<br>
+**Active Directory security audit tool -- extract quick wins, attack paths, and misconfigurations from BloodHound CE**
 
-Runoff extracts quick wins from BloodHound Community Edition's Neo4j database — it identifies Active Directory attack paths, misconfigurations, and privilege escalation opportunities across **177 security queries** in 15 categories with exploitation guidance.
+Runoff extracts quick wins from BloodHound Community Edition's Neo4j database -- it identifies Active Directory attack paths, misconfigurations, and privilege escalation opportunities across **177 security queries** in 15 categories with exploitation guidance.
+
+> **Authorization Required**: This tool is designed exclusively for authorized security testing with explicit written permission. Unauthorized access to computer systems is illegal and may result in criminal prosecution.
+
+[Quick Start](#quick-start) · [Usage](#usage) · [Query Categories](#query-categories) · [Architecture](#architecture) · [Features](#features)
 
 </div>
-
-<br>
-
-## Table of Contents
-
-- [Highlights](#highlights)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Command Reference](#command-reference)
-- [Query Categories](#query-categories)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [ADCS Coverage](#adcs-coverage)
-- [Abuse Commands](#abuse-commands)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 
 ---
 
@@ -40,7 +30,7 @@ Runoff extracts quick wins from BloodHound Community Edition's Neo4j database �
 <td width="50%">
 
 ### 177 Security Queries
-Privilege escalation, ACL abuse, ADCS (ESC1-ESC15), delegation, coercion relay, lateral movement, Azure/hybrid, and credential attacks — all registered via decorator and runnable by category or individually.
+Privilege escalation, ACL abuse, ADCS (ESC1-ESC15), delegation, coercion relay, lateral movement, Azure/hybrid, and credential attacks -- all registered via decorator and runnable by category or individually.
 
 </td>
 <td width="50%">
@@ -54,7 +44,7 @@ Privilege escalation, ACL abuse, ADCS (ESC1-ESC15), delegation, coercion relay, 
 <td width="50%">
 
 ### Abuse Commands
-Enable `--abuse` to display exploitation commands alongside every finding — Impacket, Certipy, bloodyAD, Rubeus — with auto-substituted targets, domains, and OPSEC warnings.
+Enable `--abuse` to display exploitation commands alongside every finding -- Impacket, Certipy, bloodyAD, Rubeus -- with auto-substituted targets, domains, and OPSEC warnings.
 
 </td>
 <td width="50%">
@@ -88,7 +78,7 @@ Mark compromised accounts with `mark owned`, then run targeted `owned` queries t
 <td width="50%">
 
 ### BloodHound CE API
-Authenticate via HMAC, ingest collector ZIP files, view upload history, and clear database — all from the CLI. No browser required.
+Authenticate via HMAC, ingest collector ZIP files, view upload history, and clear database -- all from the CLI. No browser required.
 
 </td>
 </tr>
@@ -109,7 +99,7 @@ Authenticate via HMAC, ingest collector ZIP files, view upload history, and clea
 ### Install
 
 ```bash
-# pipx (recommended — isolated environment, global command)
+# pipx (recommended -- isolated environment, global command)
 pipx install git+https://github.com/Real-Fruit-Snacks/Runoff.git
 
 # Or standard pip
@@ -225,7 +215,7 @@ runoff -p pass -q -o json stats
 |------|-------------|---------|
 | `-b, --bolt <uri>` | Neo4j Bolt URI | `bolt://127.0.0.1:7687` |
 | `-u, --username <user>` | Neo4j username | `neo4j` |
-| `-p, --password <pass>` | Neo4j password | — |
+| `-p, --password <pass>` | Neo4j password | -- |
 | `-d, --domain <domain>` | Filter queries by domain | All domains |
 | `-o, --output <fmt>` | Output format: `table json csv html markdown` | `table` |
 | `-s, --severity <sev>` | Severity filter (comma-separated) | All |
@@ -233,7 +223,7 @@ runoff -p pass -q -o json stats
 | `-q, --quiet` | Suppress banner and info output | `false` |
 | `--no-color` | Disable color output | `false` |
 | `--debug` | Enable debug output | `false` |
-| `-O, --output-file <path>` | Write output to file | — |
+| `-O, --output-file <path>` | Write output to file | -- |
 | `-t, --tags <tags>` | Filter queries by tag (comma-separated) | All |
 | `--load-plugins` | Load custom queries from plugin directory | `false` |
 
@@ -405,7 +395,7 @@ No framework. No build step. Just a pip-installable CLI.
 | Feature | Description |
 |---------|-------------|
 | **177 security queries** | Registered via decorator, runnable by category or individually |
-| **Severity system** | CRITICAL, HIGH, MEDIUM, LOW, INFO — filterable with `-s` |
+| **Severity system** | CRITICAL, HIGH, MEDIUM, LOW, INFO -- filterable with `-s` |
 | **Domain filtering** | Flexible OR-based matching handles BloodHound data inconsistencies |
 | **Owned tracking** | Mark principals, run targeted queries, highlighted in all output |
 | **Tier-zero marking** | Tag high-value targets for focused analysis |
@@ -415,10 +405,10 @@ No framework. No build step. Just a pip-installable CLI.
 | **Abuse commands** | Exploitation guidance with auto-substituted targets and OPSEC notes |
 | **Executive summary** | Automatic domain profile, security posture, prioritized next steps |
 | **Progress bars** | Real-time query execution progress via Rich |
-| **Multi-format output** | Table, JSON, CSV, HTML — structured output to stdout |
+| **Multi-format output** | Table, JSON, CSV, HTML -- structured output to stdout |
 | **Markdown output** | Pipe-delimited markdown tables via `-o markdown` |
-| **Pipe-friendly** | JSON/CSV to stdout, status to stderr — works with `jq`, `csvtool` |
-| **BloodHound CE API** | Ingest data, view history, clear database — no browser needed |
+| **Pipe-friendly** | JSON/CSV to stdout, status to stderr -- works with `jq`, `csvtool` |
+| **BloodHound CE API** | Ingest data, view history, clear database -- no browser needed |
 | **ADCS ESC1-ESC15** | Comprehensive certificate abuse detection |
 | **Coercion relay** | NTLM relay chain analysis (SMB, LDAP, LDAPS, ADCS) |
 | **Azure/hybrid** | AAD Connect, sync accounts, hybrid attack surface |
@@ -492,8 +482,8 @@ $ runoff -p pass --abuse run acl
 | `<TARGET>` | Target principal name |
 | `<DOMAIN>` | Extracted from principal or `--domain` flag |
 | `<DC_IP>` | Configurable via settings |
-| `<USERNAME>` | *Your credentials — not stored* |
-| `<PASSWORD>` | *Your credentials — not stored* |
+| `<USERNAME>` | *Your credentials -- not stored* |
+| `<PASSWORD>` | *Your credentials -- not stored* |
 
 ---
 
@@ -551,7 +541,7 @@ pytest tests/test_queries.py    # Single file
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Run `pytest` — all tests must pass
+4. Run `pytest` -- all tests must pass
 5. Commit with a descriptive message
 6. Open a Pull Request
 

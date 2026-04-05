@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Runoff — BloodHound CE Quick Win Extractor</title>
-  <meta name="description" content="CLI tool for extracting quick wins from BloodHound Community Edition's Neo4j database. Identify Active Directory attack paths, misconfigurations, and privilege escalation opportunities across 15 security categories.">
+  <title>Runoff — AD Security Audit Tool</title>
+  <meta name="description" content="Active Directory security audit tool — extract quick wins, attack paths, and misconfigurations from BloodHound CE. 177 security queries across 15 categories with exploitation guidance.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
   <style>
     /* =========================================================
        RUNOFF LANDING PAGE
-       Catppuccin Mocha palette — dark terminal aesthetic
+       Catppuccin Mocha palette — teal/green accent
        ========================================================= */
 
     *, *::before, *::after {
@@ -48,6 +48,9 @@
       --ctp-base: #1e1e2e;
       --ctp-mantle: #181825;
       --ctp-crust: #11111b;
+
+      --accent: var(--ctp-teal);
+      --accent2: var(--ctp-green);
     }
 
     html {
@@ -108,13 +111,13 @@
     }
 
     a {
-      color: var(--ctp-blue);
+      color: var(--ctp-teal);
       text-decoration: none;
       transition: color 0.2s;
     }
 
     a:hover {
-      color: var(--ctp-sapphire);
+      color: var(--ctp-green);
     }
 
     /* ---- Section titles ---- */
@@ -165,7 +168,7 @@
       box-shadow:
         0 0 0 1px var(--ctp-surface0),
         0 24px 80px -12px rgba(0, 0, 0, 0.6),
-        0 0 120px -40px rgba(243, 139, 168, 0.08);
+        0 0 120px -40px rgba(148, 226, 213, 0.08);
     }
 
     .hero-titlebar {
@@ -211,7 +214,7 @@
     }
 
     .hero-prompt .prompt-path {
-      color: var(--ctp-blue);
+      color: var(--ctp-teal);
     }
 
     .hero-title {
@@ -222,14 +225,14 @@
       margin-bottom: 8px;
       background: linear-gradient(
         135deg,
-        var(--ctp-red) 0%,
-        var(--ctp-peach) 40%,
-        var(--ctp-yellow) 100%
+        var(--ctp-teal) 0%,
+        var(--ctp-green) 50%,
+        var(--ctp-teal) 100%
       );
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      filter: drop-shadow(0 0 40px rgba(243, 139, 168, 0.2));
+      filter: drop-shadow(0 0 40px rgba(148, 226, 213, 0.2));
     }
 
     .hero-cursor {
@@ -284,16 +287,16 @@
     }
 
     .btn-primary {
-      background: var(--ctp-red);
+      background: var(--ctp-teal);
       color: var(--ctp-crust);
-      border-color: var(--ctp-red);
+      border-color: var(--ctp-teal);
     }
 
     .btn-primary:hover {
-      background: var(--ctp-peach);
-      border-color: var(--ctp-peach);
+      background: var(--ctp-green);
+      border-color: var(--ctp-green);
       color: var(--ctp-crust);
-      box-shadow: 0 0 24px rgba(243, 139, 168, 0.25);
+      box-shadow: 0 0 24px rgba(148, 226, 213, 0.25);
     }
 
     .btn-ghost {
@@ -334,7 +337,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, var(--ctp-red), transparent);
+      background: linear-gradient(90deg, transparent, var(--ctp-teal), transparent);
       opacity: 0;
       transition: opacity 0.3s;
     }
@@ -377,8 +380,8 @@
     }
 
     /* ---- Unique accent colors per card ---- */
-    .feature-card:nth-child(1):hover { border-color: var(--ctp-red); }
-    .feature-card:nth-child(1):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-red), transparent); }
+    .feature-card:nth-child(1):hover { border-color: var(--ctp-teal); }
+    .feature-card:nth-child(1):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-teal), transparent); }
 
     .feature-card:nth-child(2):hover { border-color: var(--ctp-green); }
     .feature-card:nth-child(2):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-green), transparent); }
@@ -386,11 +389,11 @@
     .feature-card:nth-child(3):hover { border-color: var(--ctp-peach); }
     .feature-card:nth-child(3):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-peach), transparent); }
 
-    .feature-card:nth-child(4):hover { border-color: var(--ctp-mauve); }
-    .feature-card:nth-child(4):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-mauve), transparent); }
+    .feature-card:nth-child(4):hover { border-color: var(--ctp-red); }
+    .feature-card:nth-child(4):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-red), transparent); }
 
-    .feature-card:nth-child(5):hover { border-color: var(--ctp-teal); }
-    .feature-card:nth-child(5):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-teal), transparent); }
+    .feature-card:nth-child(5):hover { border-color: var(--ctp-mauve); }
+    .feature-card:nth-child(5):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-mauve), transparent); }
 
     .feature-card:nth-child(6):hover { border-color: var(--ctp-yellow); }
     .feature-card:nth-child(6):hover::before { background: linear-gradient(90deg, transparent, var(--ctp-yellow), transparent); }
@@ -416,7 +419,7 @@
       box-shadow:
         0 0 0 1px var(--ctp-surface0),
         0 32px 80px -16px rgba(0, 0, 0, 0.5),
-        0 0 160px -60px rgba(243, 139, 168, 0.06);
+        0 0 160px -60px rgba(148, 226, 213, 0.06);
       max-width: 900px;
       margin: 0 auto;
       text-align: left;
@@ -443,7 +446,7 @@
     }
 
     .mockup-banner {
-      border: 2px solid var(--ctp-red);
+      border: 2px solid var(--ctp-teal);
       border-radius: 4px;
       padding: 16px 24px;
       text-align: center;
@@ -453,7 +456,7 @@
     .mockup-banner h2 {
       font-size: 15px;
       font-weight: 700;
-      color: var(--ctp-red);
+      color: var(--ctp-teal);
       letter-spacing: 0.04em;
     }
 
@@ -655,7 +658,7 @@
       font-size: 12px;
       font-weight: 700;
       color: var(--ctp-crust);
-      background: var(--ctp-red);
+      background: var(--ctp-teal);
       width: 24px;
       height: 24px;
       display: flex;
@@ -665,9 +668,9 @@
       flex-shrink: 0;
     }
 
-    .arch-item:nth-child(2) .arch-item-marker { background: var(--ctp-peach); }
-    .arch-item:nth-child(3) .arch-item-marker { background: var(--ctp-yellow); }
-    .arch-item:nth-child(4) .arch-item-marker { background: var(--ctp-green); }
+    .arch-item:nth-child(2) .arch-item-marker { background: var(--ctp-green); }
+    .arch-item:nth-child(3) .arch-item-marker { background: var(--ctp-peach); }
+    .arch-item:nth-child(4) .arch-item-marker { background: var(--ctp-yellow); }
 
     .arch-item h3 {
       font-size: 14px;
@@ -713,7 +716,7 @@
     }
 
     /* =========================================================
-       STATS (KNOWLEDGE BASES EQUIVALENT)
+       STATS
        ========================================================= */
     .kb-grid {
       display: grid;
@@ -744,10 +747,10 @@
       margin-bottom: 8px;
     }
 
-    .kb-card:nth-child(1) .kb-number { color: var(--ctp-green); }
-    .kb-card:nth-child(2) .kb-number { color: var(--ctp-peach); }
+    .kb-card:nth-child(1) .kb-number { color: var(--ctp-teal); }
+    .kb-card:nth-child(2) .kb-number { color: var(--ctp-green); }
     .kb-card:nth-child(3) .kb-number { color: var(--ctp-red); }
-    .kb-card:nth-child(4) .kb-number { color: var(--ctp-blue); }
+    .kb-card:nth-child(4) .kb-number { color: var(--ctp-peach); }
 
     .kb-label {
       font-size: 13px;
@@ -763,7 +766,7 @@
     }
 
     /* =========================================================
-       CATEGORY TABLE (RANKING TABLE EQUIVALENT)
+       CATEGORY TABLE
        ========================================================= */
     .ranking-table-wrap {
       overflow-x: auto;
@@ -810,7 +813,7 @@
     }
 
     .ranking-table .highlight {
-      color: var(--ctp-green);
+      color: var(--ctp-teal);
       font-weight: 600;
     }
 
@@ -934,7 +937,7 @@
     }
 
     .footer-links a:hover {
-      color: var(--ctp-blue);
+      color: var(--ctp-teal);
     }
 
     .footer-copy {
@@ -1020,14 +1023,14 @@
 
     /* ---- Selection highlight ---- */
     ::selection {
-      background: rgba(243, 139, 168, 0.25);
+      background: rgba(148, 226, 213, 0.25);
       color: var(--ctp-text);
     }
 
     /* ---- Focus styles for accessibility ---- */
     a:focus-visible,
     .btn:focus-visible {
-      outline: 2px solid var(--ctp-red);
+      outline: 2px solid var(--ctp-teal);
       outline-offset: 2px;
     }
   </style>
@@ -1043,17 +1046,17 @@
         <span class="hero-dot hero-dot--red"></span>
         <span class="hero-dot hero-dot--yellow"></span>
         <span class="hero-dot hero-dot--green"></span>
-        <span class="hero-titlebar-text">runoff -- bloodhound ce quick wins</span>
+        <span class="hero-titlebar-text">runoff -- ad security audit</span>
       </div>
       <div class="hero-body">
         <h1 class="hero-title">Runoff<span class="hero-cursor" aria-hidden="true"></span></h1>
         <p class="hero-tagline">
-          <em>BloodHound CE quick win extractor</em><br>
-          Query Neo4j. Surface attack paths. Get exploitation commands.
+          <em>Active Directory security audit tool</em><br>
+          Extract quick wins, attack paths, and misconfigurations from BloodHound CE.
         </p>
         <div class="hero-buttons">
           <a href="#getting-started" class="btn btn-primary">Get Started</a>
-          <a href="https://github.com/Real-Fruit-Snacks/runoff" class="btn btn-ghost">View on GitHub</a>
+          <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="btn btn-ghost">View on GitHub</a>
         </div>
       </div>
     </div>
@@ -1135,7 +1138,7 @@
       </div>
       <div class="mockup-body">
         <div class="mockup-banner">
-          <h2>RUNOFF - BloodHound CE Quick Wins v3.1.0</h2>
+          <h2>RUNOFF - AD Security Audit v3.1.0</h2>
         </div>
 
         <div class="mockup-target">
@@ -1403,13 +1406,13 @@
             <span class="comment"># Install with pipx (recommended)</span>
           </div>
           <div class="start-line" style="margin-bottom:16px;">
-            <span class="prompt">$</span> <span class="cmd">pipx install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/runoff.git</span>
+            <span class="prompt">$</span> <span class="cmd">pipx install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span>
           </div>
           <div class="start-line">
             <span class="comment"># Or install with pip</span>
           </div>
           <div class="start-line" style="margin-bottom:16px;">
-            <span class="prompt">$</span> <span class="cmd">pip install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/runoff.git</span>
+            <span class="prompt">$</span> <span class="cmd">pip install</span> <span class="arg">git+https://github.com/Real-Fruit-Snacks/Runoff.git</span>
           </div>
           <div class="start-line">
             <span class="comment"># Run all security queries</span>
@@ -1440,7 +1443,7 @@
 
       <div class="start-info">
       <p>
-        <strong style="color:var(--ctp-text);">pipx</strong> is the recommended install method -- it creates an isolated environment and keeps your system Python clean. <a href="https://pipx.pypa.io/" style="color:var(--ctp-blue);">Install pipx</a> if you don't have it yet.
+        <strong style="color:var(--ctp-text);">pipx</strong> is the recommended install method -- it creates an isolated environment and keeps your system Python clean. <a href="https://pipx.pypa.io/" style="color:var(--ctp-teal);">Install pipx</a> if you don't have it yet.
       </p>
       <p>
         Point Runoff at your BloodHound CE Neo4j instance. Default connection: <code>bolt://127.0.0.1:7687</code> with <code>neo4j</code> user.
@@ -1457,13 +1460,13 @@
 
   <!-- ============ FOOTER ============ -->
   <footer class="site-footer">
-    <p class="footer-tagline">Built for offense. Designed for clarity.</p>
+    <p class="footer-tagline">Extract quick wins. Find attack paths before attackers do.</p>
     <nav class="footer-links" aria-label="Footer links">
-      <a href="https://github.com/Real-Fruit-Snacks/runoff">GitHub</a>
-      <a href="https://github.com/Real-Fruit-Snacks/runoff/blob/main/LICENSE">License (MIT)</a>
-      <a href="https://github.com/Real-Fruit-Snacks/runoff/issues">Report Issue</a>
+      <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
+      <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/LICENSE">License (MIT)</a>
+      <a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Report Issue</a>
     </nav>
-    <p class="footer-copy">Runoff -- BloodHound CE quick win extractor</p>
+    <p class="footer-copy">Runoff -- Active Directory security audit tool</p>
     <p class="footer-disclaimer">
       For authorized security testing, CTF competitions, and educational purposes only.
       Always obtain proper authorization before testing on systems you do not own.
