@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Runoff — Find the Attack Path</title>
-    <meta name="description" content="Active Directory security audit extracting attack paths from BloodHound CE. 177 queries across 15 categories with exploitation guidance and multi-format reporting.">
+    <meta name="description" content="Active Directory security audit extracting attack paths from BloodHound CE. 183 Cypher queries across 15 categories with exploitation guidance and multi-format reporting.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Inter,sans-serif' font-size='24' font-weight='800' fill='%2394e2d5'%3ER%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -157,7 +157,7 @@
         <div class="container">
             <div class="hero-logo animate"><img src="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-dark.svg" alt="Runoff"></div>
             <h1 class="hero-tagline animate" style="transition-delay:.1s">Find the attack path</h1>
-            <p class="hero-desc animate" style="transition-delay:.2s">Active Directory security audit extracting attack paths from BloodHound CE. Automated analysis and reporting across 177 queries in 15 categories.</p>
+            <p class="hero-desc animate" style="transition-delay:.2s">Queries BloodHound CE's Neo4j database over Bolt to surface AD attack paths, misconfigurations, and privilege escalation. 183 Cypher queries across 15 categories.</p>
             <div class="hero-ctas animate" style="transition-delay:.3s">
                 <a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest" class="btn-primary">Download Latest</a>
                 <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="btn-secondary">View Source</a>
@@ -168,8 +168,8 @@
                     <span class="terminal-label">runoff</span>
                 </div>
                 <div class="terminal-body"><pre><span class="t-g">$</span> runoff -p 'bloodhound' run all
-<span class="t-b">connected to neo4j://localhost:7687</span>
-<span class="t-b">running 177 queries across 15 categories...</span>
+<span class="t-b">connected to bolt://127.0.0.1:7687</span>
+<span class="t-b">running 183 queries across 15 categories...</span>
 <span class="t-p">[ACL]  12 findings  (3 critical, 5 high)</span>
 <span class="t-p">[ADCS] 8 findings   (2 critical)</span>
 
@@ -184,13 +184,13 @@
     <!-- Stats -->
     <div class="container">
         <div class="stats animate">
-            <div class="stat"><div class="stat-num" data-target="177">0</div><div class="stat-label">Queries</div></div>
+            <div class="stat"><div class="stat-num" data-target="183">0</div><div class="stat-label">Queries</div></div>
             <div class="stat-div"></div>
             <div class="stat"><div class="stat-num" data-target="15">0</div><div class="stat-label">Categories</div></div>
             <div class="stat-div"></div>
-            <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-label">Formats</div></div>
+            <div class="stat"><div class="stat-num" data-target="33">0</div><div class="stat-label">Commands</div></div>
             <div class="stat-div"></div>
-            <div class="stat"><div class="stat-num" data-target="3">0</div><div class="stat-label">Platforms</div></div>
+            <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-label">Formats</div></div>
         </div>
         <div class="gradient-line"></div>
     </div>
@@ -199,26 +199,26 @@
     <section id="features">
         <div class="container">
             <div class="section-label animate">FEATURES</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">177 queries, zero touches</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">Queries BloodHound CE Neo4j data. Finds attack paths, misconfigurations, and privilege escalation opportunities with abuse commands.</p>
+            <h2 class="section-title animate" style="transition-delay:.08s">183 queries, zero AD contact</h2>
+            <p class="section-desc animate" style="transition-delay:.16s">Queries BloodHound CE's Neo4j graph over Bolt. Finds attack paths, misconfigurations, and privilege escalation with exploitation guidance.</p>
 
             <div class="bento">
                 <div class="bento-card bento-hero animate" style="transition-delay:.1s">
-                    <h3>177 Security Queries</h3>
-                    <p>Queries span 15 categories — ACL abuse, ADCS ESC1-ESC15, delegation, coercion relay, lateral movement, Azure/hybrid, Kerberoasting, DCSync, GPO abuse, and Exchange.</p>
-                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass run acl adcs delegation<br><span class="t-p">[ACL] 12 findings</span><br><span class="t-p">[ADCS] 8 findings</span></div>
+                    <h3>183 Security Queries</h3>
+                    <p>Queries span 15 categories &mdash; ACL abuse, ADCS ESC1-15, delegation, credential attacks, lateral movement, Azure/hybrid, Kerberoasting, DCSync, GPO abuse, and Exchange. Filter by severity or tags.</p>
+                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass -s critical,high run acl adcs<br><span class="t-p">[ACL] 12 findings</span><br><span class="t-p">[ADCS] 8 findings</span></div>
                 </div>
                 <div class="bento-card bento-stat animate" style="transition-delay:.18s">
-                    <div class="big">177</div>
+                    <div class="big">183</div>
                     <div class="label">Security Queries</div>
                 </div>
                 <div class="bento-card animate" style="transition-delay:.2s">
                     <h3 style="color:var(--mauve)">Node Investigation</h3>
-                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins. Wildcard triage mode for bulk investigation.</p>
+                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins. Wildcard triage with <code>investigate 'SVC_*@CORP.LOCAL'</code>.</p>
                 </div>
                 <div class="bento-card animate" style="transition-delay:.28s">
                     <h3 style="color:var(--green)">Abuse Commands</h3>
-                    <p>Exploitation commands alongside every finding — Impacket, Certipy, bloodyAD, Rubeus — with auto-substituted targets, domains, and OPSEC warnings.</p>
+                    <p>Exploitation commands alongside every finding &mdash; Impacket, Certipy, bloodyAD, Rubeus &mdash; loaded from YAML templates with auto-substituted targets and domains.</p>
                 </div>
                 <div class="bento-card animate" style="transition-delay:.36s">
                     <h3 style="color:var(--peach)">Multi-Format Output</h3>
@@ -230,12 +230,12 @@
                 </div>
                 <div class="bento-card bento-hero animate" style="transition-delay:.18s">
                     <h3 style="color:var(--red)">Owned Tracking</h3>
-                    <p>Mark compromised accounts and run targeted queries from your current foothold. Executive summary with domain profile, security posture, and prioritized next steps.</p>
-                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass own add USER@CORP.LOCAL<br><span class="t-b">marked USER@CORP.LOCAL as owned</span><br><span class="t-g">$</span> runoff -p pass run --from-owned</div>
+                    <p>Mark compromised accounts and run targeted queries from your current foothold. Track tier zero assets and clear markings when done.</p>
+                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass mark owned USER@CORP.LOCAL<br><span class="t-b">marked USER@CORP.LOCAL as owned</span><br><span class="t-g">$</span> runoff -p pass run owned</div>
                 </div>
                 <div class="bento-card animate" style="transition-delay:.26s">
-                    <h3 style="color:var(--yellow)">BloodHound CE API</h3>
-                    <p>Ingest SharpHound data, view collection history, and manage the database without a browser. Plugin system for custom queries.</p>
+                    <h3 style="color:var(--yellow)">Path Finding</h3>
+                    <p>Shortest paths to Domain Admins, Domain Controllers, or between any two nodes. <code>path da</code>, <code>path dc</code>, <code>path to</code> with detailed edge info.</p>
                 </div>
             </div>
         </div>
@@ -246,31 +246,29 @@
         <div class="container">
             <div class="section-label animate">CAPABILITIES</div>
             <h2 class="section-title animate" style="transition-delay:.08s">Query coverage</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">Full query coverage across 15 AD attack categories. Severity filtering, tag-based selection, and custom plugin queries.</p>
+            <p class="section-desc animate" style="transition-delay:.16s">183 queries across 15 AD attack categories. Severity filtering, tag-based selection, and custom plugin queries.</p>
             <div class="pills">
-                <div class="pill animate"><span class="dot dot-g"></span>ACL Abuse</div>
-                <div class="pill animate"><span class="dot dot-g"></span>ADCS ESC1-15</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Delegation</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Coercion Relay</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Lateral Movement</div>
+                <div class="pill animate"><span class="dot dot-g"></span>ACL Abuse (25)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>ADCS ESC1-15 (18)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Credentials (19)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Hygiene (23)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Lateral (19)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Delegation (12)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Domain (16)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Groups (10)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Owned (11)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Azure (9)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Paths (6)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Exchange (5)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>GPO (3)</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Misc (3)</div>
                 <div class="pill animate"><span class="dot dot-g"></span>Abuse Commands</div>
-                <div class="pill animate"><span class="dot dot-g"></span>DCSync</div>
-                <div class="pill animate"><span class="dot dot-g"></span>GPO Abuse</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Exchange</div>
-                <div class="pill animate"><span class="dot dot-g"></span>BloodHound CE API</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Credential Attacks</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Owned Tracking</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Abuse Commands</div>
-                <div class="pill animate"><span class="dot dot-g"></span>JSON Export</div>
-                <div class="pill animate"><span class="dot dot-g"></span>HTML Reports</div>
-                <div class="pill animate"><span class="dot dot-g"></span>CSV Export</div>
                 <div class="pill animate"><span class="dot dot-g"></span>Plugin System</div>
-                <div class="pill animate"><span class="dot dot-y"></span>API Integration</div>
+                <div class="pill animate"><span class="dot dot-g"></span>JSON/CSV/HTML</div>
+                <div class="pill animate"><span class="dot dot-g"></span>Ingestion API</div>
             </div>
             <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ov0)">
-                <span style="color:var(--green)">●</span> Full &nbsp;
-                <span style="color:var(--yellow)">●</span> Beta &nbsp;
-                <span style="color:var(--sf2)">●</span> Not Supported
+                <span style="color:var(--green)">&#9679;</span> Full
             </div>
         </div>
     </section>
@@ -280,12 +278,12 @@
         <div class="container">
             <div class="section-label animate">ARCHITECTURE</div>
             <h2 class="section-title animate" style="transition-delay:.08s">Query-driven pipeline</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">CLI connects to Neo4j, executes Cypher queries via the core engine, and renders results through the display layer.</p>
+            <p class="section-desc animate" style="transition-delay:.16s">CLI connects to Neo4j over Bolt, executes Cypher queries via the core engine, and renders results through the display layer.</p>
             <div class="arch-grid">
-                <div class="arch-card animate" style="transition-delay:.1s"><div class="arch-num">1</div><h3>CLI Layer</h3><p>Click CLI with 11 command modules — <code>run</code>, <code>quickwins</code>, <code>investigate</code>, <code>path</code>, <code>own</code>, <code>summary</code>, <code>api</code>. Severity and tag filtering on all queries.</p></div>
-                <div class="arch-card animate" style="transition-delay:.2s"><div class="arch-num">2</div><h3>Query Engine</h3><p>177 queries in 15 category folders registered via <code>@register_query</code> decorator. Runnable by category, severity, tag, or individually.</p></div>
-                <div class="arch-card animate" style="transition-delay:.3s"><div class="arch-num">3</div><h3>Neo4j Core</h3><p>BloodHoundCE class wrapping the Neo4j Bolt driver. Cypher query execution with parameterized templates and result normalization.</p></div>
-                <div class="arch-card animate" style="transition-delay:.4s"><div class="arch-num">4</div><h3>Display Layer</h3><p>Rich tables, panels, and trees with Catppuccin Mocha theme. Table, JSON, CSV, HTML, and Markdown renderers for structured output.</p></div>
+                <div class="arch-card animate" style="transition-delay:.1s"><div class="arch-num">1</div><h3>CLI Layer</h3><p>Click CLI with 33 commands &mdash; <code>run</code>, <code>quickwins</code>, <code>investigate</code>, <code>path da/dc/to</code>, <code>mark</code>, <code>edges</code>, <code>ingest</code>. Severity and tag filtering on all queries.</p></div>
+                <div class="arch-card animate" style="transition-delay:.2s"><div class="arch-num">2</div><h3>Query Engine</h3><p>183 queries in 15 category folders registered via <code>@register_query</code> decorator. Runnable by category, severity, tag, or individually.</p></div>
+                <div class="arch-card animate" style="transition-delay:.3s"><div class="arch-num">3</div><h3>Neo4j Core</h3><p>BloodHoundCE class wrapping the Neo4j Bolt driver. Parameterized Cypher execution, path finding, edge traversal, and owned principal caching.</p></div>
+                <div class="arch-card animate" style="transition-delay:.4s"><div class="arch-num">4</div><h3>Display Layer</h3><p>Rich tables, panels, and trees with Catppuccin Mocha theme. Table, JSON, CSV, HTML, and Markdown renderers with structured output.</p></div>
             </div>
         </div>
     </section>
@@ -310,17 +308,17 @@
                 </div>
                 <div class="terminal animate" style="transition-delay:.25s">
                     <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-label">usage.sh</span></div>
-                    <div class="terminal-body"><pre><span class="t-m"># Run all 177 queries</span>
+                    <div class="terminal-body"><pre><span class="t-m"># Run all 183 queries</span>
 <span class="t-g">$</span> runoff -p 'pass' run all
 
-<span class="t-m"># Quick wins summary</span>
+<span class="t-m"># Quick wins</span>
 <span class="t-g">$</span> runoff -p 'pass' quickwins
 
 <span class="t-m"># Investigate a node</span>
 <span class="t-g">$</span> runoff -p pass investigate USER@CORP.LOCAL
 
-<span class="t-m"># JSON output piped to jq</span>
-<span class="t-g">$</span> runoff -p pass -o json run all | jq '.'</pre></div>
+<span class="t-m"># Paths to Domain Admins</span>
+<span class="t-g">$</span> runoff -p pass path da USER@CORP.LOCAL</pre></div>
                 </div>
             </div>
         </div>
@@ -335,21 +333,21 @@
                 <div class="detect-card detect-hidden animate" style="transition-delay:.1s">
                     <h3>Low Footprint</h3>
                     <ul>
-                        <li>Read-only — queries data already in BloodHound</li>
-                        <li>No AD contact — only touches Neo4j database</li>
-                        <li>No network scanning — zero active reconnaissance</li>
-                        <li>No credential storage — password passed via CLI flag</li>
-                        <li>No remote execution — purely analytical tool</li>
+                        <li>Read-only &mdash; queries data already in BloodHound</li>
+                        <li>No AD contact &mdash; only touches Neo4j database</li>
+                        <li>No network scanning &mdash; zero active reconnaissance</li>
+                        <li>No credential storage &mdash; password passed via CLI or env</li>
+                        <li>No remote execution &mdash; purely analytical tool</li>
                     </ul>
                 </div>
                 <div class="detect-card detect-visible animate" style="transition-delay:.2s">
                     <h3>Visible To</h3>
                     <ul>
-                        <li>Neo4j logs — Cypher query audit trail</li>
-                        <li>Bolt connection — Neo4j network metadata</li>
-                        <li>Process monitoring — Python process visible</li>
-                        <li>Shell history — CLI invocation logged</li>
-                        <li>File system — output files if exported</li>
+                        <li>Neo4j logs &mdash; Cypher query audit trail</li>
+                        <li>Bolt connection &mdash; Neo4j network metadata</li>
+                        <li>Process monitoring &mdash; Python process visible</li>
+                        <li>Shell history &mdash; CLI invocation logged</li>
+                        <li>File system &mdash; output files if exported</li>
                     </ul>
                 </div>
             </div>
@@ -361,10 +359,10 @@
         <div class="container">
             <div class="footer-line"></div>
             <div class="footer-grid">
-                <div><h4>Documentation</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#quick-start">Quick Start</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#features">Features</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#architecture">Architecture</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#security">Security</a></li></ul></div>
+                <div><h4>Documentation</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#quick-start">Quick Start</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#features">Features</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#command-reference">Command Reference</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#configuration">Configuration</a></li></ul></div>
                 <div><h4>Resources</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest">Latest Release</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Report Issue</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CONTRIBUTING.md">Contributing</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CHANGELOG.md">Changelog</a></li></ul></div>
-                <div><h4>Toolkit</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Rapids">Rapids</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a></li><li><a href="https://github.com/Real-Fruit-Snacks">View All →</a></li></ul></div>
-                <div><h4>License</h4><p>MIT License<br>Copyright © 2026<br>Real-Fruit-Snacks</p></div>
+                <div><h4>Toolkit</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Rapids">Rapids</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a></li><li><a href="https://github.com/Real-Fruit-Snacks">View All &rarr;</a></li></ul></div>
+                <div><h4>License</h4><p>MIT License<br>Copyright &copy; 2026<br>Real-Fruit-Snacks</p></div>
             </div>
             <div class="footer-bottom">Part of the Real-Fruit-Snacks security toolkit</div>
         </div>
