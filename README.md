@@ -86,7 +86,7 @@ Queries span 15 categories, each registered via `@register_query` decorator. Run
 
 ```bash
 # Run specific categories
-runoff -p 'pass' run acl adcs delegation credentials
+runoff -p 'pass' run acl adcs delegation privesc
 
 # Filter by severity
 runoff -p 'pass' -s critical,high run all
@@ -101,7 +101,7 @@ runoff -p 'pass' query "Kerberoastable Users"
 runoff -p 'pass' query -l
 ```
 
-**Categories**: ACL abuse (25), ADCS ESC1-15 (18), credentials (19), hygiene (23), lateral movement (19), delegation (12), domain (16), groups (10), owned (11), Azure/hybrid (9), paths (6), Exchange (5), GPO (3), miscellaneous (3).
+**Run categories**: `acl`, `adcs`, `privesc`, `hygiene`, `lateral`, `delegation`, `basic`, `groups`, `owned`, `azure`, `paths`, `exchange`, `gpo`, `misc` (or `all` for everything).
 
 ### Quick Filters
 
@@ -163,7 +163,7 @@ Mark compromised principals and run targeted queries from your current foothold:
 runoff -p 'pass' mark owned USER@CORP.LOCAL
 
 # Mark as tier zero
-runoff -p 'pass' mark tierzero DC01.CORP.LOCAL
+runoff -p 'pass' mark tier-zero DC01.CORP.LOCAL
 
 # List all owned principals
 runoff -p 'pass' owned
