@@ -201,11 +201,11 @@ runoff -p 'pass' members 'DOMAIN ADMINS@CORP.LOCAL'
 # What groups does a user belong to
 runoff -p 'pass' memberof USER@CORP.LOCAL
 
-# Where does a user have admin rights
-runoff -p 'pass' adminto USER@CORP.LOCAL
-
 # Who has admin rights on a machine
-runoff -p 'pass' adminof DC01.CORP.LOCAL
+runoff -p 'pass' adminto DC01.CORP.LOCAL
+
+# Where does a user have admin rights
+runoff -p 'pass' adminof USER@CORP.LOCAL
 
 # Active sessions
 runoff -p 'pass' sessions DC01.CORP.LOCAL
@@ -356,8 +356,8 @@ Priority: CLI flags > environment variables > config file > defaults.
 | `clear db` | Clear entire database |
 | `members <group>` | Recursive group members |
 | `memberof <node>` | Group memberships |
-| `adminto <node>` | Where a user has admin rights |
-| `adminof <node>` | Who has admin rights on a machine |
+| `adminto <computer>` | Who has admin rights on a machine |
+| `adminof <principal>` | What computers a principal can admin |
 | `sessions <node>` | Active sessions on a machine |
 | `edges from <node>` | Outbound attack edges |
 | `edges to <node>` | Inbound attack edges |
