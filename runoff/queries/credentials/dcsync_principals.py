@@ -61,13 +61,49 @@ def get_dcsync_principals(
             print_warning(f"    {partial} principal(s) have partial replication rights")
         console.print()
 
+        # Classify each row as legitimate-replication vs. unexpected. DCSync
+        # rights on Domain Controllers / Administrators / well-known
+        # replication groups are expected and benign; only non-matching
+        # principals warrant the "should be investigated" banner.
+        EXPECTED_PREFIXES = (
+            "DOMAIN CONTROLLERS@",
+            "ENTERPRISE DOMAIN CONTROLLERS@",
+            "ENTERPRISE READ-ONLY DOMAIN CONTROLLERS@",
+            "ADMINISTRATORS@",
+            "DOMAIN ADMINS@",
+            "ENTERPRISE ADMINS@",
+        )
+
+        def _is_expected(row) -> bool:
+            name = (row.get("principal") or "").upper()
+            # Computers returned here are Domain Controllers (the query wouldn't
+            # otherwise surface them with these edges); treat as expected.
+            if row.get("type") == "Computer":
+                return True
+            return any(name.startswith(p) for p in EXPECTED_PREFIXES)
+
+        unexpected = [r for r in results if not _is_expected(r)]
+
         # Expected principals with DCSync
         console.print("    Expected principals with DCSync:", style="text.dim")
-        console.print("    - Domain Controllers (group)", style="text.dim")
+        console.print("    - Domain Controllers (group + DC computers)", style="text.dim")
         console.print("    - Enterprise Domain Controllers", style="text.dim")
-        console.print("    - Administrators", style="text.dim")
+        console.print("    - Administrators / Domain Admins / Enterprise Admins", style="text.dim")
         console.print()
-        console.print("    Unexpected principals should be investigated!", style="info")
+        if unexpected:
+            print_warning(
+                f"[!] {len(unexpected)} unexpected principal(s) — investigate these!"
+            )
+            for r in unexpected:
+                console.print(
+                    f"      - {r['principal']} ({r['type']})",
+                    style="warn",
+                )
+        else:
+            console.print(
+                "    All principals are legitimate replication accounts.",
+                style="success",
+            )
         console.print()
 
         print_table(
