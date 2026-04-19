@@ -26,6 +26,9 @@ def get_gpo_to_tier_zero(
     domain_filter = "AND toUpper(gpo.domain) = toUpper($domain)" if domain else ""
     params = {"domain": domain} if domain else {}
 
+    # Extract size(tier_zero_assets) as an explicit WITH alias so it isn't
+    # treated as an implicit grouping key in the RETURN/ORDER BY — Neo4j 5+
+    # deprecates that pattern with a GqlStatusObject 01N42 warning.
     query = f"""
     MATCH (gpo:GPO)-[:GpLink]->(ou)
     WHERE (ou:OU OR ou:Domain)
@@ -34,17 +37,19 @@ def get_gpo_to_tier_zero(
     WHERE (asset:Computer AND asset.objectid ENDS WITH '-516')
        OR ('admin_tier_0' IN COALESCE(asset.system_tags, []))
        OR (asset:Group AND (asset.objectid ENDS WITH '-512' OR asset.objectid ENDS WITH '-519'))
-    WITH gpo, ou, collect(DISTINCT asset.name) AS tier_zero_assets
+    WITH gpo, ou,
+         collect(DISTINCT asset.name) AS tier_zero_assets,
+         size(collect(DISTINCT asset.name)) AS tier_zero_count
     OPTIONAL MATCH (controller)-[r]->(gpo)
     WHERE r.isacl = true AND type(r) IN ['GenericAll', 'WriteDacl', 'WriteOwner', 'Owns', 'GenericWrite']
     AND (controller.admincount IS NULL OR controller.admincount = false)
     RETURN
         gpo.name AS gpo_name,
         ou.name AS linked_to,
-        size(tier_zero_assets) AS tier_zero_count,
+        tier_zero_count,
         tier_zero_assets[0..3] AS sample_assets,
         collect(DISTINCT controller.name) AS non_admin_controllers
-    ORDER BY size(tier_zero_assets) DESC
+    ORDER BY tier_zero_count DESC
     LIMIT 25
     """
     results = bh.run_query(query, params)

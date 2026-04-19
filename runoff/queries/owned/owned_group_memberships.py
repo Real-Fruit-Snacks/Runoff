@@ -26,6 +26,9 @@ def get_owned_group_memberships(
     )
     params = {"from_owned": config.from_owned} if config.from_owned else {}
 
+    # MemberOf*1..3 walks transitive membership, so one (owned, g) pair
+    # can appear via multiple intermediate groups. DISTINCT is required
+    # on the result tuple or the same row duplicates across hop lengths.
     query = f"""
     MATCH (owned)-[:MemberOf*1..3]->(g:Group)
     WHERE (owned:Tag_Owned OR 'owned' IN COALESCE(owned.system_tags, []) OR owned.owned = true)
@@ -35,7 +38,7 @@ def get_owned_group_memberships(
     AND NOT g.name STARTS WITH 'EVERYONE@'
     AND NOT g.name STARTS WITH 'AUTHENTICATED USERS@'
     {from_owned_filter}
-    RETURN owned.name AS owned_principal, {node_type("owned")} AS owned_type,
+    RETURN DISTINCT owned.name AS owned_principal, {node_type("owned")} AS owned_type,
            g.name AS group_name,
            CASE WHEN 'admin_tier_0' IN COALESCE(g.system_tags, []) THEN 'Yes' ELSE 'No' END AS tier_zero
     ORDER BY tier_zero DESC, owned.name

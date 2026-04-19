@@ -187,9 +187,16 @@ class BloodHoundCE:
             raise RuntimeError("Not connected to Neo4j. Call connect() first.")
 
         if self.debug:
-            console.print(f"[text.dim][DEBUG] Query: {query}[/text.dim]")
+            # Cypher contains square brackets in edge bindings like
+            # (n)-[r]->(m) and in list literals, which Rich would parse as
+            # markup tags and silently strip. Disable markup inside the
+            # query/params payload so the printed text matches what's
+            # actually sent to Neo4j.
+            console.print("[text.dim][DEBUG] Query:[/text.dim]", end=" ")
+            console.print(query, style="text.dim", markup=False, highlight=False)
             if params:
-                console.print(f"[text.dim][DEBUG] Params: {params}[/text.dim]")
+                console.print("[text.dim][DEBUG] Params:[/text.dim]", end=" ")
+                console.print(repr(params), style="text.dim", markup=False, highlight=False)
 
         start_time = time.time()
         results = []

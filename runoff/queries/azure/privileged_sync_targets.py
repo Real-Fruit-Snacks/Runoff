@@ -27,11 +27,45 @@ def get_privileged_sync_targets(
     If Azure is compromised, these accounts become targets for password spray
     or token theft attacks that could impact on-prem infrastructure.
     """
-    domain_filter = "AND toUpper(u.domain) = toUpper($domain)" if domain else ""
+    domain_filter_u = "AND toUpper(u.domain) = toUpper($domain)" if domain else ""
+    domain_filter_c = "AND toUpper(c.domain) = toUpper($domain)" if domain else ""
+    domain_filter_n = "AND toUpper(n.domain) = toUpper($domain)" if domain else ""
     params = {"domain": domain} if domain else {}
 
-    # Look for privileged users that have Azure-related attributes or naming
-    # In practice, synced users often have specific attributes set
+    # First confirm the domain actually has Azure AD sync infrastructure.
+    # Previously this finding fired on every privileged user regardless of
+    # whether anything in the environment was synced to Azure — producing
+    # false-positive HIGH findings in on-prem-only environments.
+    # Sync indicators: AAD Connect host, Seamless SSO computer object
+    # (AZUREADSSOACC$), or MSOL_/AAD_/SYNC_ accounts.
+    sync_probe = f"""
+    OPTIONAL MATCH (c:Computer)
+    WHERE (c.name =~ '(?i).*(AADC|AZUREAD|AADCONNECT|DIRSYNC).*'
+           OR ANY(spn IN COALESCE(c.serviceprincipalnames, [])
+                  WHERE toUpper(spn) CONTAINS 'AZUREADSSOACC'))
+    {domain_filter_c}
+    WITH collect(DISTINCT c.name) AS sync_hosts
+    OPTIONAL MATCH (n)
+    WHERE (n:User OR n:Computer)
+    AND n.name =~ '(?i).*(MSOL_|AAD_|SYNC_|AZUREADSSOACC).*'
+    {domain_filter_n}
+    RETURN sync_hosts, collect(DISTINCT n.name) AS sync_accounts
+    """
+    probe = bh.run_query(sync_probe, params)
+    sync_hosts = (probe[0].get("sync_hosts") if probe else None) or []
+    sync_accounts = (probe[0].get("sync_accounts") if probe else None) or []
+
+    if not sync_hosts and not sync_accounts:
+        # No Azure sync infrastructure detected — this finding does not apply.
+        # Render the header so the user can see it was checked but avoid a
+        # misleading HIGH banner and table.
+        if print_header("Privileged Accounts Synced to Azure", severity, 0):
+            print_subheader("No Azure AD sync infrastructure detected — skipping")
+        return 0
+
+    # Sync infrastructure is present. Now the list of privileged on-prem
+    # accounts is legitimately at risk (if they're synced, an Azure compromise
+    # reaches them).
     query = f"""
     MATCH (u:User)-[:MemberOf*1..]->(g:Group)
     WHERE (g.highvalue = true OR g:Tag_Tier_Zero OR g.admincount = true
@@ -40,7 +74,7 @@ def get_privileged_sync_targets(
            OR g.objectid ENDS WITH '-544')
     AND u.enabled = true
     AND NOT u.name STARTS WITH 'KRBTGT@'
-    {domain_filter}
+    {domain_filter_u}
     WITH DISTINCT u, collect(DISTINCT g.name) AS priv_groups
     RETURN u.name AS user,
            u.displayname AS display_name,
@@ -55,7 +89,12 @@ def get_privileged_sync_targets(
     if not print_header("Privileged Accounts Synced to Azure", severity, result_count):
         return result_count
 
-    print_subheader(f"Found {result_count} privileged account(s) potentially synced")
+    print_subheader(f"Found {result_count} privileged account(s) at risk from Azure sync")
+
+    if sync_hosts:
+        print_warning(f"    Azure sync host(s) detected: {', '.join(sync_hosts[:3])}")
+    if sync_accounts:
+        print_warning(f"    Sync account(s) detected: {', '.join(sync_accounts[:3])}")
 
     if results:
         print_warning("[!] These privileged accounts may be synced to Azure AD")
