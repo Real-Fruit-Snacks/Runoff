@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 from runoff.display.colors import Severity
@@ -37,10 +38,21 @@ def get_enabled_guest_accounts(
     print_subheader(f"Found {result_count} enabled Guest account(s)")
 
     if results:
+        # Never-logged-in accounts come back as lastlogon=0 (or None / -1 in
+        # older collectors); format these as "Never" rather than the raw
+        # epoch float (which renders as "0.0" in the table).
+        def _format_logon(epoch) -> str:
+            if epoch is None or epoch in (0, -1, 0.0, -1.0):
+                return "Never"
+            try:
+                return time.strftime("%Y-%m-%d", time.localtime(epoch))
+            except (ValueError, OSError, OverflowError, TypeError):
+                return "Unknown"
+
         print_warning("Enabled Guest accounts are a security risk!")
         print_table(
             ["Account", "Domain", "Last Logon"],
-            [[r["account"], r["domain"], r["last_logon"]] for r in results],
+            [[r["account"], r["domain"], _format_logon(r["last_logon"])] for r in results],
         )
 
     return result_count

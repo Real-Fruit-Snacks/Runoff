@@ -189,14 +189,25 @@ class BloodHoundCE:
         if self.debug:
             # Cypher contains square brackets in edge bindings like
             # (n)-[r]->(m) and in list literals, which Rich would parse as
-            # markup tags and silently strip. Disable markup inside the
-            # query/params payload so the printed text matches what's
-            # actually sent to Neo4j.
-            console.print("[text.dim][DEBUG] Query:[/text.dim]", end=" ")
-            console.print(query, style="text.dim", markup=False, highlight=False)
+            # markup tags and silently strip. Print each debug line as a
+            # single call with markup disabled but a style argument so the
+            # "[DEBUG] Query:" / "[DEBUG] Params:" prefix always appears and
+            # the Cypher body is preserved verbatim. (The earlier two-call
+            # approach with end=" " dropped the prefix on subsequent
+            # queries.)
+            console.print(
+                f"[DEBUG] Query: {query}",
+                style="text.dim",
+                markup=False,
+                highlight=False,
+            )
             if params:
-                console.print("[text.dim][DEBUG] Params:[/text.dim]", end=" ")
-                console.print(repr(params), style="text.dim", markup=False, highlight=False)
+                console.print(
+                    f"[DEBUG] Params: {params!r}",
+                    style="text.dim",
+                    markup=False,
+                    highlight=False,
+                )
 
         start_time = time.time()
         results = []
