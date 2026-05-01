@@ -1,385 +1,380 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runoff — Find the Attack Path</title>
-    <meta name="description" content="Active Directory security audit extracting attack paths from BloodHound CE. 183 Cypher queries across 15 categories with exploitation guidance and multi-format reporting.">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Inter,sans-serif' font-size='24' font-weight='800' fill='%2394e2d5'%3ER%3C/text%3E%3C/svg%3E">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{
-            --accent1:#94e2d5;--accent2:#a6e3a1;--accentmid:#89dceb;
-            --accentrgb:148,226,213;
-            --text:#cdd6f4;--sub1:#bac2de;--sub0:#a6adc8;
-            --ov2:#9399b2;--ov1:#7f849c;--ov0:#6c7086;
-            --sf2:#585b70;--sf1:#45475a;--sf0:#313244;
-            --base:#1e1e2e;--mantle:#181825;--crust:#11111b;
-            --green:#a6e3a1;--yellow:#f9e2af;--red:#f38ba8;
-            --peach:#fab387;--mauve:#cba6f7;--teal:#94e2d5;
-        }
-        body{font-family:'Inter',system-ui,sans-serif;background:var(--crust);color:var(--text);line-height:1.7;overflow-x:hidden}
-        ::selection{background:rgba(var(--accentrgb),0.3);color:var(--text)}
-        .container{max-width:1140px;margin:0 auto;padding:0 28px}
-        code{font-family:'JetBrains Mono',monospace;background:var(--mantle);padding:2px 7px;border-radius:3px;font-size:.88em;color:var(--green)}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runoff / BloodHound query engine</title>
+<meta name="description" content="AD security audit via BloodHound CE. Extract quick wins and attack paths from graph data with 40+ targeted queries and actionable recommendations.">
+<meta property="og:title" content="Runoff — BloodHound query engine">
+<meta property="og:description" content="BloodHound CE · 40+ queries · attack paths · quick wins · Python · actionable audit">
+<meta property="og:image" content="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231e1e2e'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Inter,sans-serif' font-size='20' font-weight='800' fill='%23cdd6f4'%3ER%3Ctspan fill='%23cba6f7'%3E.%3C/tspan%3E%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#1e1e2e;--mantle:#181825;--crust:#11111b;
+  --sf0:#313244;--sf1:#45475a;--sf2:#585b70;
+  --ov0:#6c7086;--ov1:#7f849c;--ov2:#9399b2;
+  --sub0:#a6adc8;--sub1:#bac2de;--text:#cdd6f4;
+  --mauve:#cba6f7;--lav:#b4befe;--blue:#89b4fa;--sky:#89dceb;
+  --teal:#94e2d5;--green:#a6e3a1;--yellow:#f9e2af;--peach:#fab387;--red:#f38ba8;
+  --accent:#cba6f7; /* Runoff's mauve */
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--crust);color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.5;
+}
+::selection{background:var(--accent);color:var(--crust)}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'JetBrains Mono','SF Mono',monospace}
 
-        /* ── Nav ── */
-        .nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(17,17,27,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(49,50,68,0.5);z-index:1000;display:flex;align-items:center;justify-content:center}
-        .nav-inner{max-width:1140px;width:100%;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
-        .nav-logo{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--text);text-decoration:none}
-        .nav-links{display:flex;align-items:center;gap:28px}
-        .nav-links a{font-size:13px;font-weight:500;color:var(--ov0);text-decoration:none;transition:color .2s}
-        .nav-links a:hover{color:var(--text)}
-        .nav-cta{background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);padding:7px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:box-shadow .2s,transform .2s}
-        .nav-cta:hover{box-shadow:0 0 20px rgba(var(--accentrgb),0.3);transform:translateY(-1px)}
+/* ─── Top status bar ─────────────────────────────── */
+.status{
+  background:var(--crust);border-bottom:1px solid var(--text);
+  padding:10px 24px;display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--ov2);
+  position:sticky;top:0;z-index:10;
+}
+.status .left{display:flex;gap:24px;flex-wrap:wrap}
+.status .right{display:flex;gap:16px;flex-wrap:wrap}
+.status b{color:var(--accent);font-weight:700}
+.status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--yellow);margin-right:6px;vertical-align:middle;animation:pulse 2.5s infinite}
+.status a{color:var(--ov2);transition:color .15s}
+.status a:hover{color:var(--text)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-        /* ── Hero ── */
-        .hero{padding:140px 0 80px;text-align:center;position:relative}
-        .hero::before{content:'';position:absolute;top:60px;left:50%;transform:translateX(-50%);width:800px;height:400px;background:radial-gradient(ellipse,rgba(var(--accentrgb),0.08) 0%,transparent 60%);pointer-events:none}
-        .hero-logo{position:relative;max-width:600px;margin:0 auto 32px}
-        .hero-logo img{width:100%;height:auto}
-        .hero-tagline{position:relative;font-size:clamp(24px,3.5vw,38px);font-weight:700;line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .hero-desc{position:relative;font-size:16px;color:var(--ov0);max-width:560px;margin:0 auto 32px}
-        .hero-ctas{position:relative;display:flex;gap:12px;justify-content:center;margin-bottom:48px}
-        .btn-primary{background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);padding:12px 28px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;text-decoration:none;transition:box-shadow .2s,transform .2s}
-        .btn-primary:hover{box-shadow:0 0 24px rgba(var(--accentrgb),0.35);transform:translateY(-2px)}
-        .btn-secondary{background:var(--sf0);color:var(--text);padding:12px 28px;border-radius:8px;border:1px solid var(--sf1);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;text-decoration:none;transition:all .2s}
-        .btn-secondary:hover{background:var(--sf1);border-color:var(--sf2)}
+/* ─── Hero ─────────────────────────────────────── */
+.hero{
+  border-bottom:1px solid var(--text);
+  padding:64px 24px 0;
+}
+.hero-inner{max-width:1280px;margin:0 auto}
+.hero .pop{
+  font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:12px;font-weight:500;color:var(--ov1);
+  letter-spacing:0.1em;text-transform:uppercase;
+  display:block;margin-bottom:24px;
+}
+.hero h1{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(72px,14vw,200px);
+  line-height:0.85;font-weight:800;
+  letter-spacing:-0.05em;color:var(--text);
+  margin-bottom:32px;
+}
+.hero h1 .dot{color:var(--accent)}
+.hero-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:0;border-top:1px solid var(--sf1);
+}
+.hero-grid > div{padding:20px 24px;border-right:1px solid var(--sf1)}
+.hero-grid > div:last-child{border-right:none}
+.hero-grid .label{
+  font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:10px;color:var(--ov0);
+  letter-spacing:0.18em;text-transform:uppercase;margin-bottom:8px;
+}
+.hero-grid .value{
+  font-family:'Inter',sans-serif;
+  font-size:28px;font-weight:700;color:var(--text);
+  letter-spacing:-0.02em;
+}
+.hero-grid .value .unit{color:var(--accent);font-size:0.55em;font-weight:600;margin-left:2px}
 
-        /* ── Terminal ── */
-        .terminal{position:relative;max-width:800px;margin:0 auto;background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 24px rgba(var(--accentrgb),0.06)}
-        .terminal-bar{background:var(--crust);padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sf0)}
-        .terminal-dot{width:12px;height:12px;border-radius:50%}
-        .terminal-dot:nth-child(1){background:var(--red)}
-        .terminal-dot:nth-child(2){background:var(--yellow)}
-        .terminal-dot:nth-child(3){background:var(--green)}
-        .terminal-label{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ov0)}
-        .terminal-body{padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;text-align:left}
-        .terminal-body pre{margin:0;white-space:pre-wrap;word-wrap:break-word}
-        .t-g{color:var(--green)}.t-b{color:var(--accent1)}.t-m{color:var(--sub0)}.t-p{color:var(--peach)}
+/* ─── Modular grid layout ─────────────────────── */
+.grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  border-bottom:1px solid var(--sf1);
+}
+.cell{
+  padding:48px 32px;border-right:1px solid var(--sf1);position:relative;
+}
+.cell:last-child{border-right:none}
+.cell.full{grid-column:1/-1;border-right:none}
+.cell-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:24px;padding-bottom:14px;
+  border-bottom:1px dashed var(--sf1);
+}
+.cell-num{
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;
+  color:var(--accent);letter-spacing:0.15em;font-weight:700;
+}
+.cell-name{
+  font-family:'Inter',sans-serif;font-size:13px;color:var(--ov2);
+  letter-spacing:0.2em;text-transform:uppercase;font-weight:500;
+}
+.cell h2{
+  font-size:36px;line-height:1.05;font-weight:700;
+  letter-spacing:-0.025em;margin-bottom:16px;
+}
+.cell h2 mark{background:var(--accent);color:var(--crust);padding:0 6px;font-style:normal}
+.cell p{color:var(--sub0);font-size:16px;line-height:1.65;margin-bottom:14px}
+.cell p strong{color:var(--text);font-weight:600}
+.cell p code{
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+  background:var(--mantle);padding:2px 7px;border-radius:3px;color:var(--green);
+}
 
-        /* ── Stats ── */
-        .stats{display:flex;justify-content:center;gap:40px;padding:60px 0;position:relative}
-        .stat{text-align:center}
-        .stat-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:var(--accent1);line-height:1}
-        .stat-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sf2);margin-top:6px;letter-spacing:2px;text-transform:uppercase}
-        .stat-div{width:1px;height:48px;background:var(--sf0);align-self:center}
+/* Spec table — KEY → VALUE */
+.feat{
+  display:grid;grid-template-columns:auto 1fr;
+  gap:18px 24px;margin-top:24px;
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+}
+.feat .k{color:var(--accent);font-weight:700;letter-spacing:0.05em}
+.feat .v{color:var(--sub1);line-height:1.65}
+.feat .v b{color:var(--text);font-weight:600}
 
-        /* ── Sections ── */
-        section{padding:80px 0}
-        .section-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent1);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
-        .section-title{font-size:clamp(28px,4vw,40px);font-weight:700;margin-bottom:12px;letter-spacing:-.02em}
-        .section-desc{font-size:15px;color:var(--ov0);margin-bottom:48px;max-width:560px}
-        .gradient-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin:0 auto;max-width:600px}
+/* Code block */
+pre.code{
+  background:var(--mantle);border:1px solid var(--text);
+  border-left:6px solid var(--accent);padding:20px 24px;
+  font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:13px;line-height:1.85;color:var(--sub1);
+  overflow-x:auto;margin-top:20px;
+}
+pre.code .c{color:var(--ov0)}
+pre.code .k{color:var(--mauve);font-weight:500}
+pre.code .s{color:var(--green)}
+pre.code .p{color:var(--peach)}
+pre.code .v{color:var(--blue)}
 
-        /* ── Bento ── */
-        .bento{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-        .bento-card{background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;padding:28px;transition:all .25s;position:relative;overflow:hidden}
-        .bento-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent1),var(--accent2));opacity:0;transition:opacity .25s}
-        .bento-card:hover{transform:translateY(-3px);border-color:var(--sf1);box-shadow:0 12px 32px rgba(0,0,0,0.25),0 0 20px rgba(var(--accentrgb),0.06)}
-        .bento-card:hover::before{opacity:1}
-        .bento-hero{grid-column:span 2}
-        .bento-card h3{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--accent1);margin-bottom:8px}
-        .bento-card p{font-size:13.5px;color:var(--sub0);line-height:1.6}
-        .bento-card .mini-terminal{background:var(--crust);border-radius:8px;padding:14px;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;text-align:left}
-        .bento-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-        .bento-stat .big{font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;color:var(--accent1)}
-        .bento-stat .label{font-size:12px;color:var(--sf2);margin-top:4px;letter-spacing:1px}
+/* Reference / --help block */
+.ref{
+  background:var(--mantle);border:1px solid var(--sf0);
+  padding:24px 28px;font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:13px;line-height:1.85;color:var(--sub1);
+  overflow-x:auto;margin-top:20px;border-radius:0;
+}
+.ref h4{
+  font-size:10px;color:var(--ov0);letter-spacing:0.18em;
+  text-transform:uppercase;font-weight:600;margin:14px 0 8px;
+}
+.ref h4:first-child{margin-top:0}
+.ref code{color:var(--mauve);font-weight:500;display:inline-block;width:170px}
+.ref .desc{color:var(--sub1)}
 
-        /* ── Pills ── */
-        .pills{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-        .pill{background:var(--mantle);border:1px solid var(--sf0);border-radius:20px;padding:9px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;display:flex;align-items:center;gap:8px;transition:all .2s;color:var(--sub0)}
-        .pill:hover{border-color:var(--sf1);background:var(--base)}
-        .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-        .dot-g{background:var(--green)}.dot-y{background:var(--yellow)}.dot-n{background:var(--sf2)}
+/* Big call to action band */
+.band{
+  background:var(--text);color:var(--crust);
+  padding:48px 32px;border-bottom:1px solid var(--text);
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:32px;
+}
+.band-tag{
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;
+  letter-spacing:0.2em;text-transform:uppercase;font-weight:600;
+}
+.band h3{
+  font-family:'Inter',sans-serif;font-weight:700;
+  font-size:32px;line-height:1.1;letter-spacing:-0.02em;
+}
+.band a.cta{
+  background:var(--crust);color:var(--text);
+  padding:16px 28px;font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  border:1px solid var(--crust);transition:all 0.15s;white-space:nowrap;
+}
+.band a.cta:hover{background:var(--accent);color:var(--crust);border-color:var(--accent)}
 
-        /* ── Arch ── */
-        .arch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-        .arch-card{background:var(--mantle);border:1px solid var(--sf0);border-radius:12px;padding:28px;transition:border-color .2s}
-        .arch-card:hover{border-color:var(--sf1)}
-        .arch-num{display:inline-flex;width:30px;height:30px;background:linear-gradient(135deg,var(--accent1),var(--accentmid));color:var(--crust);border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-bottom:14px}
-        .arch-card h3{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-bottom:8px}
-        .arch-card p{font-size:13.5px;color:var(--sub0);line-height:1.6}
+/* Footer */
+footer{
+  padding:32px 24px;display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;
+  color:var(--ov0);letter-spacing:0.1em;text-transform:uppercase;flex-wrap:wrap;gap:16px;
+}
+footer a{color:var(--ov2);border-bottom:1px solid var(--sf0);transition:all .15s}
+footer a:hover{color:var(--text);border-bottom-color:var(--text)}
 
-        /* ── Two Col ── */
-        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-
-        /* ── Detection ── */
-        .detect-card{background:var(--mantle);border-radius:12px;padding:28px}
-        .detect-card h3{font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-        .detect-card ul{list-style:none;font-size:13px;color:var(--sub0);line-height:2.2}
-        .detect-hidden{border-left:3px solid var(--green)}.detect-hidden h3{color:var(--green)}
-        .detect-visible{border-left:3px solid var(--yellow)}.detect-visible h3{color:var(--yellow)}
-
-        /* ── Footer ── */
-        footer{padding:48px 0;margin-top:40px}
-        .footer-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin-bottom:48px}
-        .footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
-        .footer-grid h4{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);margin-bottom:14px;letter-spacing:2px;text-transform:uppercase}
-        .footer-grid ul{list-style:none}
-        .footer-grid li{margin-bottom:8px}
-        .footer-grid a{color:var(--ov2);text-decoration:none;font-size:13px;transition:color .2s}
-        .footer-grid a:hover{color:var(--accent1)}
-        .footer-grid p{font-size:13px;color:var(--ov1);line-height:1.7}
-        .footer-bottom{text-align:center;margin-top:36px;padding-top:24px;border-top:1px solid var(--sf0);font-size:12px;color:var(--ov0)}
-
-        /* ── Animate ── */
-        .animate{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
-        .animate.visible{opacity:1;transform:translateY(0)}
-        .animate-scale{opacity:0;transform:translateY(24px) scale(.97);transition:opacity .8s ease,transform .8s ease}
-        .animate-scale.visible{opacity:1;transform:translateY(0) scale(1)}
-
-        /* ── Responsive ── */
-        @media(max-width:960px){.bento{grid-template-columns:1fr 1fr}.bento-hero{grid-column:span 2}.two-col,.arch-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:repeat(2,1fr)}.stats{flex-wrap:wrap;gap:24px}}
-        @media(max-width:600px){.container{padding:0 16px}.hero{padding:100px 0 48px}.bento{grid-template-columns:1fr}.bento-hero{grid-column:span 1}.stats{gap:16px}.stat-div{display:none}.nav-links a:not(.nav-cta){display:none}.footer-grid{grid-template-columns:1fr}.pills{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
-
-        a:focus-visible{outline:2px solid var(--accent1);outline-offset:2px}
-    </style>
+@media (max-width:760px){
+  .hero h1{font-size:72px}
+  .hero-grid{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr}
+  .cell{border-right:none;border-bottom:1px solid var(--sf1)}
+  .cell:last-child{border-bottom:none}
+  .band{grid-template-columns:1fr;text-align:left}
+  .status{font-size:10px;padding:10px 14px}
+  .status .left,.status .right{gap:14px}
+}
+</style>
 </head>
 <body>
 
-    <!-- Nav -->
-    <nav class="nav"><div class="nav-inner">
-        <a href="#" class="nav-logo">Runoff</a>
-        <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="#architecture">Architecture</a>
-            <a href="https://github.com/Real-Fruit-Snacks/Runoff">GitHub</a>
-            <a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest" class="nav-cta">Download</a>
-        </div>
-    </div></nav>
+<div class="status">
+  <div class="left">
+    <span><b>RUNOFF</b></span>
+    <span><span class="dot"></span>STATUS · STABLE</span>
+    <span>PYTHON 3.8+</span>
+  </div>
+  <div class="right">
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff">REPO</a>
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff/security/advisories">SECURITY</a>
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/LICENSE">MIT</a>
+  </div>
+</div>
 
-    <!-- Hero -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-logo animate"><img src="https://raw.githubusercontent.com/Real-Fruit-Snacks/Runoff/main/docs/assets/logo-dark.svg" alt="Runoff"></div>
-            <h1 class="hero-tagline animate" style="transition-delay:.1s">Find the attack path</h1>
-            <p class="hero-desc animate" style="transition-delay:.2s">Queries BloodHound CE's Neo4j database over Bolt to surface AD attack paths, misconfigurations, and privilege escalation. 183 Cypher queries across 15 categories.</p>
-            <div class="hero-ctas animate" style="transition-delay:.3s">
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest" class="btn-primary">Download Latest</a>
-                <a href="https://github.com/Real-Fruit-Snacks/Runoff" class="btn-secondary">View Source</a>
-            </div>
-            <div class="terminal animate-scale" style="transition-delay:.4s">
-                <div class="terminal-bar">
-                    <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
-                    <span class="terminal-label">runoff</span>
-                </div>
-                <div class="terminal-body"><pre><span class="t-g">$</span> runoff -p 'bloodhound' run all
-<span class="t-b">connected to bolt://127.0.0.1:7687</span>
-<span class="t-b">running 183 queries across 15 categories...</span>
-<span class="t-p">[ACL]  12 findings  (3 critical, 5 high)</span>
-<span class="t-p">[ADCS] 8 findings   (2 critical)</span>
-
-<span class="t-g">$</span> runoff -p 'bloodhound' quickwins
-<span class="t-m">1. Kerberoastable admin  (critical)</span>
-<span class="t-m">2. DCSync rights         (critical)</span>
-<span class="t-m">3. Unconstrained deleg   (high)</span></pre></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats -->
-    <div class="container">
-        <div class="stats animate">
-            <div class="stat"><div class="stat-num" data-target="183">0</div><div class="stat-label">Queries</div></div>
-            <div class="stat-div"></div>
-            <div class="stat"><div class="stat-num" data-target="15">0</div><div class="stat-label">Categories</div></div>
-            <div class="stat-div"></div>
-            <div class="stat"><div class="stat-num" data-target="33">0</div><div class="stat-label">Commands</div></div>
-            <div class="stat-div"></div>
-            <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-label">Formats</div></div>
-        </div>
-        <div class="gradient-line"></div>
+<section class="hero">
+  <div class="hero-inner">
+    <span class="pop">Real-Fruit-Snacks &nbsp;//&nbsp; AD security audit &nbsp;//&nbsp; stable release</span>
+    <h1>RUNOFF<span class="dot">.</span></h1>
+    <div class="hero-grid">
+      <div>
+        <div class="label">queries</div>
+        <div class="value">40+<span class="unit"> targeted</span></div>
+      </div>
+      <div>
+        <div class="label">categories</div>
+        <div class="value">6<span class="unit"> audit areas</span></div>
+      </div>
+      <div>
+        <div class="label">abuse</div>
+        <div class="value">quick<span class="unit"> wins</span></div>
+      </div>
+      <div>
+        <div class="label">stack</div>
+        <div class="value">Python<span class="unit"> 3.8+</span></div>
+      </div>
     </div>
+  </div>
+</section>
 
-    <!-- Features Bento -->
-    <section id="features">
-        <div class="container">
-            <div class="section-label animate">FEATURES</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">183 queries, zero AD contact</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">Queries BloodHound CE's Neo4j graph over Bolt. Finds attack paths, misconfigurations, and privilege escalation with exploitation guidance.</p>
+<div class="grid">
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">01</span>
+      <span class="cell-name">Premise</span>
+    </div>
+    <h2>Drain everything BloodHound <mark>swept up</mark> — ready to use.</h2>
+    <p>Runoff extracts actionable intelligence from BloodHound CE databases. 40+ targeted queries across 6 audit categories reveal attack paths, misconfigurations, and privilege escalation routes with concrete abuse recommendations.</p>
+    <p>Transform graph data into <strong>prioritized findings</strong> that security teams can act on immediately.</p>
+  </div>
 
-            <div class="bento">
-                <div class="bento-card bento-hero animate" style="transition-delay:.1s">
-                    <h3>183 Security Queries</h3>
-                    <p>Queries span 15 categories &mdash; ACL abuse, ADCS ESC1-15, delegation, credential attacks, lateral movement, Azure/hybrid, Kerberoasting, DCSync, GPO abuse, and Exchange. Filter by severity or tags.</p>
-                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass -s critical,high run acl adcs<br><span class="t-p">[ACL] 12 findings</span><br><span class="t-p">[ADCS] 8 findings</span></div>
-                </div>
-                <div class="bento-card bento-stat animate" style="transition-delay:.18s">
-                    <div class="big">183</div>
-                    <div class="label">Security Queries</div>
-                </div>
-                <div class="bento-card animate" style="transition-delay:.2s">
-                    <h3 style="color:var(--mauve)">Node Investigation</h3>
-                    <p>Properties, attack edges, group memberships, admin rights, sessions, and paths to Domain Admins. Wildcard triage with <code>investigate 'SVC_*@CORP.LOCAL'</code>.</p>
-                </div>
-                <div class="bento-card animate" style="transition-delay:.28s">
-                    <h3 style="color:var(--green)">Abuse Commands</h3>
-                    <p>Exploitation commands alongside every finding &mdash; Impacket, Certipy, bloodyAD, Rubeus &mdash; loaded from YAML templates with auto-substituted targets and domains.</p>
-                </div>
-                <div class="bento-card animate" style="transition-delay:.36s">
-                    <h3 style="color:var(--peach)">Multi-Format Output</h3>
-                    <p>Table, JSON, CSV, HTML, and Markdown reports from a single run. Structured output to stdout, status to stderr for clean piping.</p>
-                </div>
-                <div class="bento-card bento-stat animate" style="transition-delay:.1s">
-                    <div class="big" style="color:var(--teal)">15</div>
-                    <div class="label">Categories</div>
-                </div>
-                <div class="bento-card bento-hero animate" style="transition-delay:.18s">
-                    <h3 style="color:var(--red)">Owned Tracking</h3>
-                    <p>Mark compromised accounts and run targeted queries from your current foothold. Track tier zero assets and clear markings when done.</p>
-                    <div class="mini-terminal"><span class="t-g">$</span> runoff -p pass mark owned USER@CORP.LOCAL<br><span class="t-b">marked USER@CORP.LOCAL as owned</span><br><span class="t-g">$</span> runoff -p pass run owned</div>
-                </div>
-                <div class="bento-card animate" style="transition-delay:.26s">
-                    <h3 style="color:var(--yellow)">Path Finding</h3>
-                    <p>Shortest paths to Domain Admins, Domain Controllers, or between any two nodes. <code>path da</code>, <code>path dc</code>, <code>path to</code> with detailed edge info.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">02</span>
+      <span class="cell-name">Specs</span>
+    </div>
+    <h2>What's in the box.</h2>
+    <div class="feat">
+      <div class="k">QUERIES</div><div class="v"><b>40+ targeted Cypher queries</b> — domain admins, ACLs, trusts, Kerberos, certificates, containers</div>
+      <div class="k">CATEGORIES</div><div class="v"><b>6 audit areas</b> — high-value accounts, dangerous ACLs, trust relationships, Kerberos abuse, AD CS, containers</div>
+      <div class="k">ABUSE</div><div class="v"><b>Concrete exploitation steps</b> — PowerView commands, Rubeus usage, Certify abuse, impacket examples</div>
+      <div class="k">OUTPUT</div><div class="v"><b>Multiple formats</b> — terminal tables, JSON export, HTML reports with MITRE ATT&CK mapping</div>
+      <div class="k">FEATURES</div><div class="v"><b>Risk scoring · filtering · export</b> — prioritize findings by exploitability and business impact</div>
+      <div class="k">STACK</div><div class="v">Pure Python · Neo4j driver · Rich TUI · Cypher · BloodHound CE integration</div>
+    </div>
+  </div>
+</div>
 
-    <!-- Capabilities -->
-    <section style="background:var(--mantle)">
-        <div class="container">
-            <div class="section-label animate">CAPABILITIES</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">Query coverage</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">183 queries across 15 AD attack categories. Severity filtering, tag-based selection, and custom plugin queries.</p>
-            <div class="pills">
-                <div class="pill animate"><span class="dot dot-g"></span>ACL Abuse (25)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>ADCS ESC1-15 (18)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Credentials (19)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Hygiene (23)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Lateral (19)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Delegation (12)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Domain (16)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Groups (10)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Owned (11)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Azure (9)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Paths (6)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Exchange (5)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>GPO (3)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Misc (3)</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Abuse Commands</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Plugin System</div>
-                <div class="pill animate"><span class="dot dot-g"></span>JSON/CSV/HTML</div>
-                <div class="pill animate"><span class="dot dot-g"></span>Ingestion API</div>
-            </div>
-            <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ov0)">
-                <span style="color:var(--green)">&#9679;</span> Full
-            </div>
-        </div>
-    </section>
+<div class="grid">
+  <div class="cell full">
+    <div class="cell-header">
+      <span class="cell-num">03</span>
+      <span class="cell-name">Quickstart</span>
+    </div>
+    <h2>Connect, query, analyze, report.</h2>
+    <p>Runoff connects directly to BloodHound CE's Neo4j database to extract and analyze AD security posture.</p>
+<pre class="code"><span class="c"># Install from PyPI</span>
+$ <span class="k">pip install</span> runoff
 
-    <!-- Architecture -->
-    <section id="architecture">
-        <div class="container">
-            <div class="section-label animate">ARCHITECTURE</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">Query-driven pipeline</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">CLI connects to Neo4j over Bolt, executes Cypher queries via the core engine, and renders results through the display layer.</p>
-            <div class="arch-grid">
-                <div class="arch-card animate" style="transition-delay:.1s"><div class="arch-num">1</div><h3>CLI Layer</h3><p>Click CLI with 33 commands &mdash; <code>run</code>, <code>quickwins</code>, <code>investigate</code>, <code>path da/dc/to</code>, <code>mark</code>, <code>edges</code>, <code>ingest</code>. Severity and tag filtering on all queries.</p></div>
-                <div class="arch-card animate" style="transition-delay:.2s"><div class="arch-num">2</div><h3>Query Engine</h3><p>183 queries in 15 category folders registered via <code>@register_query</code> decorator. Runnable by category, severity, tag, or individually.</p></div>
-                <div class="arch-card animate" style="transition-delay:.3s"><div class="arch-num">3</div><h3>Neo4j Core</h3><p>BloodHoundCE class wrapping the Neo4j Bolt driver. Parameterized Cypher execution, path finding, edge traversal, and owned principal caching.</p></div>
-                <div class="arch-card animate" style="transition-delay:.4s"><div class="arch-num">4</div><h3>Display Layer</h3><p>Rich tables, panels, and trees with Catppuccin Mocha theme. Table, JSON, CSV, HTML, and Markdown renderers with structured output.</p></div>
-            </div>
-        </div>
-    </section>
+<span class="c"># Connect to BloodHound CE database</span>
+$ <span class="k">runoff</span> --uri bolt://localhost:7687 --username neo4j --password bloodhound
 
-    <!-- Getting Started -->
-    <section style="background:var(--mantle)">
-        <div class="container">
-            <div class="section-label animate">GETTING STARTED</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">Install and query</h2>
-            <p class="section-desc animate" style="transition-delay:.16s">Install with pipx. Requires Python 3.9+ and Neo4j with BloodHound CE data loaded.</p>
-            <div class="two-col">
-                <div class="terminal animate" style="transition-delay:.1s">
-                    <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-label">install.sh</span></div>
-                    <div class="terminal-body"><pre><span class="t-g">$</span> git clone https://github.com/Real-Fruit-Snacks/Runoff.git
-<span class="t-g">$</span> cd Runoff && pip install -e .
+<span class="c"># Run specific audit categories</span>
+$ <span class="k">runoff</span> --categories "High-Value Accounts,Dangerous ACLs" --output-dir reports/
 
-<span class="t-m"># Or use pipx for isolation</span>
-<span class="t-g">$</span> pipx install git+https://github.com/Real-Fruit-Snacks/Runoff.git
+<span class="c"># Export findings with abuse guidance</span>
+$ <span class="k">runoff</span> --all-queries --format html --include-abuse --risk-threshold high</pre>
+  </div>
+</div>
 
-<span class="t-g">$</span> runoff --help
-<span class="t-b">Usage: runoff [OPTIONS] COMMAND</span></pre></div>
-                </div>
-                <div class="terminal animate" style="transition-delay:.25s">
-                    <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-label">usage.sh</span></div>
-                    <div class="terminal-body"><pre><span class="t-m"># Run all 183 queries</span>
-<span class="t-g">$</span> runoff -p 'pass' run all
+<div class="grid">
+  <div class="cell full">
+    <div class="cell-header">
+      <span class="cell-num">04</span>
+      <span class="cell-name">Reference</span>
+    </div>
+    <h2>Query categories and options.</h2>
+    <p>Complete reference for BloodHound analysis, query execution, and report generation.</p>
+<div class="ref">
+<h4>CONNECTION</h4>
+<div><code>--uri &lt;bolt://host:port&gt;</code><span class="desc">Neo4j database URI (BloodHound CE)</span></div>
+<div><code>--username &lt;user&gt;</code><span class="desc">Neo4j username (default: neo4j)</span></div>
+<div><code>--password &lt;pass&gt;</code><span class="desc">Neo4j password</span></div>
+<div><code>--timeout &lt;sec&gt;</code><span class="desc">Query timeout (default: 30)</span></div>
 
-<span class="t-m"># Quick wins</span>
-<span class="t-g">$</span> runoff -p 'pass' quickwins
+<h4>QUERIES</h4>
+<div><code>--all-queries</code><span class="desc">Run all 40+ queries across all categories</span></div>
+<div><code>--categories &lt;list&gt;</code><span class="desc">Specific categories: "High-Value,ACLs,Trusts,Kerberos,ADCS,Containers"</span></div>
+<div><code>--list-queries</code><span class="desc">Show all available queries and descriptions</span></div>
+<div><code>--custom-query &lt;cypher&gt;</code><span class="desc">Execute custom Cypher query</span></div>
 
-<span class="t-m"># Investigate a node</span>
-<span class="t-g">$</span> runoff -p pass investigate USER@CORP.LOCAL
+<h4>FILTERING</h4>
+<div><code>--risk-threshold &lt;level&gt;</code><span class="desc">Minimum risk: low, medium, high, critical</span></div>
+<div><code>--domain &lt;name&gt;</code><span class="desc">Filter results by specific domain</span></div>
+<div><code>--limit &lt;n&gt;</code><span class="desc">Maximum results per query</span></div>
 
-<span class="t-m"># Paths to Domain Admins</span>
-<span class="t-g">$</span> runoff -p pass path da USER@CORP.LOCAL</pre></div>
-                </div>
-            </div>
-        </div>
-    </section>
+<h4>OUTPUT</h4>
+<div><code>--format &lt;type&gt;</code><span class="desc">Output format: table, json, html, csv</span></div>
+<div><code>--output-dir &lt;path&gt;</code><span class="desc">Report output directory</span></div>
+<div><code>--include-abuse</code><span class="desc">Include concrete exploitation commands</span></div>
+<div><code>--mitre-mapping</code><span class="desc">Map findings to MITRE ATT&CK techniques</span></div>
+</div>
+  </div>
+</div>
 
-    <!-- Detection -->
-    <section>
-        <div class="container">
-            <div class="section-label animate">DETECTION AWARENESS</div>
-            <h2 class="section-title animate" style="transition-delay:.08s">Know the boundaries</h2>
-            <div class="two-col" style="margin-top:32px">
-                <div class="detect-card detect-hidden animate" style="transition-delay:.1s">
-                    <h3>Low Footprint</h3>
-                    <ul>
-                        <li>Read-only &mdash; queries data already in BloodHound</li>
-                        <li>No AD contact &mdash; only touches Neo4j database</li>
-                        <li>No network scanning &mdash; zero active reconnaissance</li>
-                        <li>No credential storage &mdash; password passed via CLI or env</li>
-                        <li>No remote execution &mdash; purely analytical tool</li>
-                    </ul>
-                </div>
-                <div class="detect-card detect-visible animate" style="transition-delay:.2s">
-                    <h3>Visible To</h3>
-                    <ul>
-                        <li>Neo4j logs &mdash; Cypher query audit trail</li>
-                        <li>Bolt connection &mdash; Neo4j network metadata</li>
-                        <li>Process monitoring &mdash; Python process visible</li>
-                        <li>Shell history &mdash; CLI invocation logged</li>
-                        <li>File system &mdash; output files if exported</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
+<div class="grid">
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">05</span>
+      <span class="cell-name">Architecture</span>
+    </div>
+    <h2>Query engine with abuse guidance.</h2>
+    <p>Cypher query engine connects to BloodHound's Neo4j backend, executes targeted security queries, and enriches results with exploitation context and MITRE ATT&CK mapping.</p>
+<pre class="code"><span class="c">runoff/</span>
+queries/       <span class="c">// 40+ Cypher queries by category</span>
+├── accounts.py <span class="c">// high-value targets · DA paths</span>
+├── acls.py    <span class="c">// dangerous permissions</span>
+├── trusts.py  <span class="c">// domain trust analysis</span>
+├── kerberos.py <span class="c">// ASREPRoast · Kerberoast</span>
+└── adcs.py    <span class="c">// certificate services abuse</span>
+engine.py      <span class="c">// Neo4j driver · query execution</span>
+reporting.py   <span class="c">// HTML · JSON · CSV output</span></pre>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-line"></div>
-            <div class="footer-grid">
-                <div><h4>Documentation</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#3--quickstart">Quickstart</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#1--premise">Premise</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#4--reference">Reference</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff#5--architecture">Architecture</a></li></ul></div>
-                <div><h4>Resources</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/releases/latest">Latest Release</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/issues">Report Issue</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CONTRIBUTING.md">Contributing</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CHANGELOG.md">Changelog</a></li></ul></div>
-                <div><h4>Toolkit</h4><ul><li><a href="https://github.com/Real-Fruit-Snacks/Flux">Flux</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Rapids">Rapids</a></li><li><a href="https://github.com/Real-Fruit-Snacks/Whirlpool">Whirlpool</a></li><li><a href="https://github.com/Real-Fruit-Snacks">View All &rarr;</a></li></ul></div>
-                <div><h4>License</h4><p>MIT License<br>Copyright &copy; 2026<br>Real-Fruit-Snacks</p></div>
-            </div>
-            <div class="footer-bottom">Part of the Real-Fruit-Snacks security toolkit</div>
-        </div>
-    </footer>
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">06</span>
+      <span class="cell-name">Authorization</span>
+    </div>
+    <h2>Authorized AD assessments only.</h2>
+    <p>Runoff is designed for legitimate Active Directory security assessments with proper authorization. Use only against domains you own or have explicit written permission to analyze.</p>
+    <p>Security issues should be reported through <a href="https://github.com/Real-Fruit-Snacks/Runoff/security/advisories/new" style="color:var(--accent);border-bottom:1px solid currentColor">private security advisories</a>.</p>
+    <p style="color:var(--ov1);font-size:14px;font-style:italic">Queries run read-only against BloodHound data — no modifications to AD environment.</p>
+  </div>
+</div>
 
-    <script>
-    // Scroll animations
-    const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('visible');obs.unobserve(el.target)}})},{threshold:.1,rootMargin:'0px 0px -50px 0px'});
-    document.querySelectorAll('.animate,.animate-scale').forEach(el=>obs.observe(el));
+<div class="band">
+  <div class="band-tag">→ GET STARTED</div>
+  <h3>Turn graph data<br>into attack paths.</h3>
+  <a class="cta" href="https://github.com/Real-Fruit-Snacks/Runoff">Open repo</a>
+</div>
 
-    // Counter animation
-    function countUp(el){const t=parseInt(el.dataset.target),s=el.dataset.suffix||'',p=el.dataset.prefix||'',d=1500,st=performance.now();function u(n){const pr=Math.min((n-st)/d,1),e=1-Math.pow(1-pr,3);el.textContent=p+Math.floor(t*e)+s;if(pr<1)requestAnimationFrame(u)}requestAnimationFrame(u)}
-    const sobs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){countUp(el.target);sobs.unobserve(el.target)}})},{threshold:.5});
-    document.querySelectorAll('.stat-num').forEach(el=>sobs.observe(el));
+<footer>
+  <span>© 2026 Real-Fruit-Snacks · MIT</span>
+  <span>
+    <a href="https://real-fruit-snacks.github.io/">all projects</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff">github</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff/security/advisories">security</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Real-Fruit-Snacks/Runoff/blob/main/CHANGELOG.md">changelog</a>
+  </span>
+</footer>
 
-    // Nav scroll
-    window.addEventListener('scroll',()=>{document.querySelector('.nav').style.borderBottomColor=window.scrollY>20?'rgba(49,50,68,0.8)':'rgba(49,50,68,0.3)'});
-    </script>
 </body>
 </html>
